@@ -66,12 +66,6 @@ of the pen for writing and drawing.
 <param indent="1" name="constSpeed" type="boolean" _gui-text="Use constant speed when pen is down">false</param>	
 <param indent="1" name="reportTime" type="boolean" _gui-text="Report time elapsed after each drawing">false</param> 
 
-<param indent="1" name="resolution" type="optiongroup" appearance="minimal" _gui-text="Motor Resolution:">
-<_option value="1">Super (slower) ~2000 DPI</_option>
-<_option value="2">Normal, ~1000 DPI</_option>
-</param>
-
-
 <param indent="1" name="smoothness" type="float" min=".1" max="100" _gui-text="Curve smoothing (default: 10.0):">10.0</param>
 <param indent="1" name="cornering" type="float" min=".1" max="100" _gui-text="Cornering speed factor (default: 10.0):">10.0</param>
 

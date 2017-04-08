@@ -45,8 +45,6 @@ autoRotate = True		# Print in portrait or landscape mode automatically
 constSpeed = False		# Use constant velocity mode when pen is down
 reportTime = False		# Report time elapsed
 
-resolution = 1			# Resolution: Either 1 for 2032 DPI, or value 2 for 1016 DPI
-
 smoothness = 10.0		# Curve smoothing (default: 10.0)
 cornering = 10.0		# Cornering speed factor (default: 10.0)
 

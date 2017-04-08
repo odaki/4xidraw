@@ -117,11 +117,6 @@ class FourxiDrawClass(inkex.Effect):
 			dest="reportTime", default=fourxidraw_conf.reportTime,
 			help="Report time elapsed")
 
-		self.OptionParser.add_option("--resolution",
-			action="store", type="int",
-			dest="resolution", default=fourxidraw_conf.resolution,
-			help="Resolution factor")	
-
 		self.OptionParser.add_option("--smoothness",
 			action="store", type="float",
 			dest="smoothness", default=fourxidraw_conf.smoothness,
@@ -260,7 +255,7 @@ class FourxiDrawClass(inkex.Effect):
 				return	
 
 		if skipSerial == False:
-			self.serialPort = ebb_serial.openPort()
+			self.serialPort = grbl_serial.openPort()
 			if self.serialPort is None:
 				inkex.errormsg(gettext.gettext("Failed to connect to 4xiDraw. :("))
 		
@@ -351,7 +346,7 @@ class FourxiDrawClass(inkex.Effect):
 		if self.serialPort is not None:
 			if not ((self.options.mode == "manual") and (self.options.manualType == "bootload")):
 				ebb_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
-			ebb_serial.closePort(self.serialPort)	
+			grbl_serial.closePort(self.serialPort)	
 		
 	def resumePlotSetup(self):
 		self.LayerFound = False
@@ -374,7 +369,7 @@ class FourxiDrawClass(inkex.Effect):
 					return
 				self.ServoSetup()
 				self.penUp() 
-				self.EnableMotors() # Set plotting resolution  
+				self.EnableMotors()
 				self.fSpeed = self.PenDownSpeed 
 				
 				self.fCurrX = self.svgLastKnownPosX_Old + fourxidraw_conf.StartPosX
@@ -472,14 +467,8 @@ class FourxiDrawClass(inkex.Effect):
 			ebb_motion.sendDisableMotors(self.serialPort)	
 
 		elif self.options.manualType == "version-check":
-			strVersion = ebb_serial.query(self.serialPort, 'V\r')
-			inkex.errormsg('I asked the EBB for its version info, and it replied:\n ' + strVersion)
-
-		elif self.options.manualType == "bootload":
-			ebb_serial.bootload(self.serialPort)	
-			inkex.errormsg(gettext.gettext("Entering bootloader mode for firmware programming.\n" +
-			"To resume normal operation, you will need to first\n" +
-			"disconnect the 4xiDraw from both USB and power."))
+			strVersion = grbl_serial.query(self.serialPort, '$I\r')
+			inkex.errormsg('I asked GRBL for its version info, and it replied:\n ' + strVersion)
 
 		else:  # self.options.manualType is walk motor:
 			if self.options.manualType == "walk-y-motor":
@@ -493,7 +482,7 @@ class FourxiDrawClass(inkex.Effect):
 			
 			self.fSpeed = self.PenDownSpeed
 				
-			self.EnableMotors() # Set plotting resolution 
+			self.EnableMotors()
 			self.fCurrX = self.svgLastKnownPosX_Old + fourxidraw_conf.StartPosX
 			self.fCurrY = self.svgLastKnownPosY_Old + fourxidraw_conf.StartPosY
 			self.ignoreLimits = True
@@ -544,7 +533,7 @@ class FourxiDrawClass(inkex.Effect):
 
 		self.ServoSetup()
 		self.penUp() 
-		self.EnableMotors() # Set plotting resolution
+		self.EnableMotors()
 
 		try:
 			# wrap everything in a try so we can for sure close the serial port 
@@ -1245,10 +1234,7 @@ class FourxiDrawClass(inkex.Effect):
 		# time to reach full speed (from zero), at maximum acceleration. Defined in settings:
 
 		if (self.virtualPenIsUp):	
-			if (self.options.resolution == 1):	# High-resolution mode
-				tMax = fourxidraw_conf.AccelTimePUHR	# Allow faster pen-up acceleration
-			else:
-				tMax = fourxidraw_conf.AccelTimePU			
+			tMax = fourxidraw_conf.AccelTimePUHR	# Allow faster pen-up acceleration
 		else:		
 			tMax = fourxidraw_conf.AccelTime			
 
@@ -1518,10 +1504,7 @@ class FourxiDrawClass(inkex.Effect):
 		if (self.virtualPenIsUp):	
 			speedLimit = self.PenUpSpeed
 			
-			if (self.options.resolution == 1):	# High-resolution mode
-				accelRate = speedLimit / fourxidraw_conf.AccelTimePUHR	# Allow faster pen-up acceleration
-			else:
-				accelRate = speedLimit / fourxidraw_conf.AccelTimePU	
+			accelRate = speedLimit / fourxidraw_conf.AccelTimePUHR	# Allow faster pen-up acceleration
 			
 			if plotDistance < (self.stepsPerInch * fourxidraw_conf.ShortThreshold):
 				accelRate = speedLimit / fourxidraw_conf.AccelTime	
@@ -1966,16 +1949,9 @@ class FourxiDrawClass(inkex.Effect):
 		else:	
 			LocalPenDownSpeed = self.options.penDownSpeed
 
-		if (self.options.resolution == 1):
-			ebb_motion.sendEnableMotors(self.serialPort, 1) # 16X microstepping
-			self.stepsPerInch = float(fourxidraw_conf.DPI_16X)						
-			self.PenDownSpeed = LocalPenDownSpeed * fourxidraw_conf.SpeedScale / 110.0
-			self.PenUpSpeed = self.options.penUpSpeed * fourxidraw_conf.SpeedScale / 110.0
-		elif (self.options.resolution == 2):
-			ebb_motion.sendEnableMotors(self.serialPort, 2) # 8X microstepping
-			self.stepsPerInch = float(fourxidraw_conf.DPI_16X / 2.0)  
-			self.PenDownSpeed = LocalPenDownSpeed * fourxidraw_conf.SpeedScale / 220.0
-			self.PenUpSpeed = self.options.penUpSpeed * fourxidraw_conf.SpeedScale / 110.0
+		self.stepsPerInch = float(fourxidraw_conf.DPI_16X)						
+		self.PenDownSpeed = LocalPenDownSpeed * fourxidraw_conf.SpeedScale / 110.0
+		self.PenUpSpeed = self.options.penUpSpeed * fourxidraw_conf.SpeedScale / 110.0
 		if (self.options.constSpeed):
 			self.PenDownSpeed = self.PenDownSpeed / 3
 		
@@ -2030,7 +2006,7 @@ class FourxiDrawClass(inkex.Effect):
 		# Assert what the defined "up" and "down" positions of the servo motor should be,
 		# and determine what the pen state is.
 		self.ServoSetup()
-		strVersion = ebb_serial.query(self.serialPort, 'QP\r')
+		strVersion = grbl_serial.query(self.serialPort, 'QP\r')
 		if strVersion[0] == '0':
 			self.bPenIsUp = False
 		else:
@@ -2051,10 +2027,10 @@ class FourxiDrawClass(inkex.Effect):
 		servo_slope = float(servo_range) / 100.0
 		
 		intTemp = int(round(fourxidraw_conf.ServoMin + servo_slope * self.options.penUpPosition))
-		ebb_serial.command(self.serialPort,  'SC,4,' + str(intTemp) + '\r')	
+		grbl_serial.command(self.serialPort,  'SC,4,' + str(intTemp) + '\r')	
 				
 		intTemp = int(round(fourxidraw_conf.ServoMin + servo_slope * penDownPos))
-		ebb_serial.command(self.serialPort,  'SC,5,' + str(intTemp) + '\r')
+		grbl_serial.command(self.serialPort,  'SC,5,' + str(intTemp) + '\r')
 
 		''' Servo speed units are in units of %/second, referring to the
 			percentages above.  The EBB takes speeds in units of 1/(12 MHz) steps
@@ -2065,10 +2041,10 @@ class FourxiDrawClass(inkex.Effect):
 			Rounding this to 5 steps/24 ms is sufficient.		'''
 		
 		intTemp = 5 * self.options.penLiftRate
-		ebb_serial.command(self.serialPort, 'SC,11,' + str(intTemp) + '\r')
+		grbl_serial.command(self.serialPort, 'SC,11,' + str(intTemp) + '\r')
 
 		intTemp = 5 * self.options.penLowerRate
-		ebb_serial.command(self.serialPort,  'SC,12,' + str(intTemp) + '\r')
+		grbl_serial.command(self.serialPort,  'SC,12,' + str(intTemp) + '\r')
 
 	def getDocProps(self):
 		'''
