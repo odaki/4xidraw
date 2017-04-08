@@ -1,10 +1,10 @@
-# axidraw_conf.py
-# Part of the AxiDraw driver for Inkscape
+# 4xidraw_conf.py
+# Part of the 4xiDraw driver for Inkscape
 # Version 1.3.0, dated March 7, 2017.
 #
 # Copyright 2017 Windell H. Oskay, Evil Mad Scientist Laboratories
 #
-# https://github.com/evil-mad/AxiDraw
+# https://github.com/bullestock/4xidraw/
 #
 # "Change numbers here, not there." :)
 
@@ -13,17 +13,17 @@
 Primary user-adjustable control parameters:
 
 We encourage you to freely tune these values as needed to match the
- behavior and performance of your AxiDraw to your application and taste.
+ behavior and performance of your 4xiDraw to your application and taste.
 
-If you are operating the AxiDraw from within Inkscape (either within the
+If you are operating the 4xiDraw from within Inkscape (either within the
  application from the Extensions menu or from the command line), please
- set your preferences within Inkscape, using the AxiDraw Control dialog.
+ set your preferences within Inkscape, using the 4xiDraw Control dialog.
  (The values listed here are ignored when called via Inkscape.)
 
-If you are operating the AxiDraw in "standalone" mode, that is, outside
+If you are operating the 4xiDraw in "standalone" mode, that is, outside
  of the Inkscape context, then please set your preferences here or via
  command-line arguments. (Preferences set within Inkscape -- via the 
- AxiDraw Control dialog -- are ignored when called via the command line.)
+ 4xiDraw Control dialog -- are ignored when called via the command line.)
  Best practice is to adjust and test settings from within the Inkscape
  GUI, before 
 '''
@@ -73,7 +73,7 @@ adjusted in everyday use. That said, proceed with caution, and keep a backup cop
 '''
 
 #Page size values typically do not need to be changed. They primarily affect viewpoint and centering.
-#Measured in page pixelssteps.  Default printable area for AxiDraw is 300 x 218 mm
+#Measured in page pixelssteps.  Default printable area for 4xiDraw is 300 x 218 mm
 
 PageWidthIn = 11.81		# Default page width in inches 	300 mm = about 11.81 inches
 PageHeightIn = 8.58		# Default page height in inches 	218 mm = about 8.58 inches
