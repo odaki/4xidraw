@@ -23,18 +23,18 @@ and use additional 4xiDraw functions.
 <page name='setup' _gui-text='Setup'>
 
 <_param name="instructions_setup" type="description" appearance="header">4xiDraw: Basic Setup</_param>
-<param indent="1" name="penUpPosition" type="int" min="0" max="100" appearance="full" 
-_gui-text="Pen height: UP (%):">60</param>
-<param indent="1" name="penDownPosition" type="int" min="0" max="100" appearance="full"
-_gui-text="Pen height: DOWN, (%):">40</param>
+<param indent="1" name="penUpPosition" type="int" min="0" max="255" appearance="full" 
+_gui-text="Pen height: UP:">60</param>
+<param indent="1" name="penDownPosition" type="int" min="0" max="255" appearance="full"
+_gui-text="Pen height: DOWN:">40</param>
 
 
 <param name="setupType" type="optiongroup" _gui-text="Action on 'Apply':">
-<_option value="align-mode">Raise pen, turn off motors</_option>	
-<_option value="toggle-pen">Toggle pen between UP, DOWN</_option>
+<_option value="align-mode">Raise pen</_option>	
+<_option value="toggle-pen">Raise and lower pen</_option>
 </param>
 <_param indent="1" name="instructions_setup3" type="description" xml:space="preserve">
-- Raise pen and turn off stepper motors to manually
+- Raise pen to manually
 move carriage to the Home Corner (upper left).
 
 - Raise and lower pen to check the vertical positions
@@ -79,7 +79,7 @@ of the pen for writing and drawing.
 <_param indent="1" name="instructions_manual" type="description"  >
 You can use this tab to send "manual" commands to the 
 4xiDraw: Walk (move) the carriage, raise or lower the
-pen, enable or disable the motors, or test communication
+pen, or test communication
 with the machine.
 </_param>
 
@@ -90,8 +90,6 @@ _gui-text="               Command: ">
 <_option value="lower-pen"      >Lower the Pen</_option>
 <_option value="walk-x-motor"   >Walk Carriage (X)</_option>
 <_option value="walk-y-motor"   >Walk Carriage (Y)</_option>
-<_option value="enable-motors"  >Enable Motors</_option>
-<_option value="disable-motors" >Disable Motors</_option> 
 <_option value="version-check"  >Check GRBL Version</_option>
 <_option value="strip-data"     >Strip plotter data from file</_option>
 </param>

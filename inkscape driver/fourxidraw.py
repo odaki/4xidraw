@@ -36,7 +36,7 @@ import string
 import time
 
 import grbl_serial
-import grbl_motion
+from grbl_motion import GrblMotion
 import plot_utils		# https://github.com/evil-mad/plotink  Requires version 0.4
 
 import fourxidraw_conf	# Some settings can be changed here.
@@ -265,9 +265,9 @@ class FourxiDrawClass(inkex.Effect):
 				self.PrintInLayersMode = False
 				self.plotCurrentLayer = True
 				if self.serialPort is not None:
+                                        self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
 					self.svgNodeCount = 0
 					self.svgLastPath = 0
-					unused_button = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
 					self.svgLayer = 12345;  # indicate (to resume routine) that we are plotting all layers.
 					self.plotDocument()
 
@@ -276,7 +276,6 @@ class FourxiDrawClass(inkex.Effect):
 					useOldResumeData = True
 				else:
 					useOldResumeData = False
-					unused_button = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
 					self.resumePlotSetup()
 					if self.resumeMode:
 						fX = self.svgPausedPosX_Old + fourxidraw_conf.StartPosX
@@ -313,7 +312,7 @@ class FourxiDrawClass(inkex.Effect):
 				self.LayersFoundToPlot = False
 				self.svgLastPath = 0
 				if self.serialPort is not None:
-					unused_button = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
+                                        self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
 					self.svgNodeCount = 0;
 					self.svgLayer = self.options.layerNumber
 					self.plotDocument()
@@ -343,9 +342,9 @@ class FourxiDrawClass(inkex.Effect):
 
 		self.svgDataRead = False
 		self.UpdateSVGWCBData(self.svg)
-		if self.serialPort is not None:
-			grbl_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
-			grbl_serial.closePort(self.serialPort)	
+		#!!if self.serialPort is not None:
+		#!!    grbl_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
+		#!!    grbl_serial.closePort(self.serialPort)	
 		
 	def resumePlotSetup(self):
 		self.LayerFound = False
@@ -366,7 +365,6 @@ class FourxiDrawClass(inkex.Effect):
 					self.resumeMode = True
 				if self.serialPort is None:
 					return
-				self.ServoSetup()
 				self.penUp() 
 				self.EnableMotors()
 				self.fSpeed = self.PenDownSpeed 
@@ -433,14 +431,15 @@ class FourxiDrawClass(inkex.Effect):
 		if self.serialPort is None:
 			return
 
-		self.ServoSetupWrapper()
-
+                self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
+                
 		if self.options.setupType == "align-mode":
 			self.penUp()
-			grbl_motion.sendDisableMotors(self.serialPort)	
 
 		elif self.options.setupType == "toggle-pen":
-			grbl_motion.TogglePen(self.serialPort)
+			self.penUp()
+                        time.sleep(1)
+			self.penDown()
 
 	def manualCommand(self):
 		"""Execute commands in the "manual" mode/tab"""
@@ -451,19 +450,13 @@ class FourxiDrawClass(inkex.Effect):
 		if self.serialPort is None:
 			return 
 
+                self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
+                
 		if self.options.manualType == "raise-pen":
-			self.ServoSetupWrapper()
 			self.penUp()
 
 		elif self.options.manualType == "lower-pen":
-			self.ServoSetupWrapper()
 			self.penDown()
-
-		elif self.options.manualType == "enable-motors":
-			self.EnableMotors()
-
-		elif self.options.manualType == "disable-motors":
-			grbl_motion.sendDisableMotors(self.serialPort)	
 
 		elif self.options.manualType == "version-check":
 			strVersion = grbl_serial.query(self.serialPort, '$I\r')
@@ -530,7 +523,6 @@ class FourxiDrawClass(inkex.Effect):
 			Offset1 = 0.0
 		self.svgTransform = parseTransform('scale(%f,%f) translate(%f,%f)' % (sx, sy,Offset0, Offset1))
 
-		self.ServoSetup()
 		self.penUp() 
 		self.EnableMotors()
 
@@ -1089,8 +1081,6 @@ class FourxiDrawClass(inkex.Effect):
 			
 			if (self.LayerPenDownSpeed != oldSpeed):
 				self.EnableMotors()	# Set speed value variables for this layer.
-			if (self.LayerPenDownPosition != oldPenDown):
-				self.ServoSetup()	# Set pen height value variables for this layer.
 
 	def plotPath(self, path, matTransform):
 		'''
@@ -1495,7 +1485,7 @@ class FourxiDrawClass(inkex.Effect):
 			if (self.virtualPenIsUp):
 				self.penUpDistance = self.penUpDistance + plotDistance
 			else:
-				self.penDownDistance = self.penDownDistance +plotDistance
+				self.penDownDistance = self.penDownDistance + plotDistance
 
 		# Maximum travel speeds:
 		# & acceleration/deceleration rate: (Maximum speed) / (time to reach that speed)
@@ -1902,7 +1892,7 @@ class FourxiDrawClass(inkex.Effect):
 			if ((moveSteps1 != 0) or (moveSteps2 != 0)): # if at least one motor step is required for this move....
 	
 				if (not self.resumeMode) and (not self.bStopped):
-					grbl_motion.doXYMove(self.serialPort, moveSteps2, moveSteps1, moveTime)			
+					self.motion.doXYMove(moveSteps2, moveSteps1, moveTime)			
 					if (moveTime > 50):
 						if self.options.mode != "manual":
 							time.sleep(float(moveTime - 10)/1000.0)  # pause before issuing next command
@@ -1918,8 +1908,7 @@ class FourxiDrawClass(inkex.Effect):
 					# if spewSegmentDebugData:			
 					#	inkex.errormsg('\nfCurrX,fCurrY (x = %1.2f, y = %1.2f) ' % (self.fCurrX, self.fCurrY))
 						
-		strButton = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
-		if strButton[0] == '1': # button pressed
+		if self.motion.IsPausePressed():
 			self.svgNodeCount = self.nodeCount - 1;
 			self.svgPausedPosX = self.fCurrX - fourxidraw_conf.StartPosX	# self.svgLastKnownPosX
 			self.svgPausedPosY = self.fCurrY - fourxidraw_conf.StartPosY	# self.svgLastKnownPosY
@@ -1974,7 +1963,7 @@ class FourxiDrawClass(inkex.Effect):
 			vTime += self.options.penLiftDelay	
 			if (vTime < 0): # Do not allow negative delay times
 				vTime = 0	
-			grbl_motion.sendPenUp(self.serialPort, vTime)		
+			self.motion.sendPenUp(vTime)		
 			if (vTime > 50):
 				if self.options.mode != "manual":
 					time.sleep(float(vTime - 10)/1000.0)  # pause before issuing next command
@@ -1995,55 +1984,11 @@ class FourxiDrawClass(inkex.Effect):
 				vTime += self.options.penLowerDelay	
 				if (vTime < 0): # Do not allow negative delay times
 					vTime = 0
-				grbl_motion.sendPenDown(self.serialPort, vTime)						
+				self.motion.sendPenDown(vTime)						
 				if (vTime > 50):
 					if self.options.mode != "manual":
 						time.sleep(float(vTime - 10)/1000.0)  # pause before issuing next command
 				self.bPenIsUp = False
-
-	def ServoSetupWrapper(self):
-		# Assert what the defined "up" and "down" positions of the servo motor should be,
-		# and determine what the pen state is.
-		self.ServoSetup()
-		strVersion = grbl_serial.query(self.serialPort, 'QP\r')
-		if strVersion[0] == '0':
-			self.bPenIsUp = False
-		else:
-			self.bPenIsUp = True
-
-	def ServoSetup(self):
-		''' Pen position units range from 0% to 100%, which correspond to
-		    a typical timing range of 7500 - 25000 in units of 1/(12 MHz).
-		    1% corresponds to ~14.6 us, or 175 units of 1/(12 MHz).
-		'''
-
-		if (self.LayerOverridePenDownHeight):
-			penDownPos = self.LayerPenDownPosition
-		else:	
-			penDownPos = self.options.penDownPosition
-		
-		servo_range = fourxidraw_conf.ServoMax - fourxidraw_conf.ServoMin
-		servo_slope = float(servo_range) / 100.0
-		
-		intTemp = int(round(fourxidraw_conf.ServoMin + servo_slope * self.options.penUpPosition))
-		grbl_serial.command(self.serialPort,  'SC,4,' + str(intTemp) + '\r')	
-				
-		intTemp = int(round(fourxidraw_conf.ServoMin + servo_slope * penDownPos))
-		grbl_serial.command(self.serialPort,  'SC,5,' + str(intTemp) + '\r')
-
-		''' Servo speed units are in units of %/second, referring to the
-			percentages above.  The EBB takes speeds in units of 1/(12 MHz) steps
-			per 24 ms.  Scaling as above, 1% of range in 1 second 
-			with SERVO_MAX = 28000  and  SERVO_MIN = 7500
-			corresponds to 205 steps change in 1 s
-			That gives 0.205 steps/ms, or 4.92 steps / 24 ms
-			Rounding this to 5 steps/24 ms is sufficient.		'''
-		
-		intTemp = 5 * self.options.penLiftRate
-		grbl_serial.command(self.serialPort, 'SC,11,' + str(intTemp) + '\r')
-
-		intTemp = 5 * self.options.penLowerRate
-		grbl_serial.command(self.serialPort,  'SC,12,' + str(intTemp) + '\r')
 
 	def getDocProps(self):
 		'''
