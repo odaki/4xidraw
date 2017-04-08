@@ -29,12 +29,12 @@ def testPort(comPort):
 	    serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0,
                                        rtscts = False,
                                        dsrdtr = True)
-            serialPort.write('\x18\r')
+            serialPort.write('$I\r')
             time.sleep(1)
 	    strVersion = serialPort.readline()
 	    if strVersion and strVersion.startswith('Grbl'):
 		return serialPort
-            serialPort.write('\x18\r')
+            serialPort.write('$I\r')
             time.sleep(1)
 	    strVersion = serialPort.readline()
 	    if strVersion and strVersion.startswith('Grbl'):
@@ -64,6 +64,7 @@ def query(comPort, cmd):
     if (comPort is not None) and (cmd is not None):
 	response = ''
 	try:
+	    comPort.write(cmd)
 	    comPort.write(cmd)
 	    response = comPort.readline()
 	    nRetryCount = 0

@@ -36,7 +36,7 @@ import string
 import time
 
 import grbl_serial
-#!!import ebb_motion
+import grbl_motion
 import plot_utils		# https://github.com/evil-mad/plotink  Requires version 0.4
 
 import fourxidraw_conf	# Some settings can be changed here.
@@ -267,7 +267,7 @@ class FourxiDrawClass(inkex.Effect):
 				if self.serialPort is not None:
 					self.svgNodeCount = 0
 					self.svgLastPath = 0
-					unused_button = ebb_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
+					unused_button = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
 					self.svgLayer = 12345;  # indicate (to resume routine) that we are plotting all layers.
 					self.plotDocument()
 
@@ -276,7 +276,7 @@ class FourxiDrawClass(inkex.Effect):
 					useOldResumeData = True
 				else:
 					useOldResumeData = False
-					unused_button = ebb_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
+					unused_button = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
 					self.resumePlotSetup()
 					if self.resumeMode:
 						fX = self.svgPausedPosX_Old + fourxidraw_conf.StartPosX
@@ -313,7 +313,7 @@ class FourxiDrawClass(inkex.Effect):
 				self.LayersFoundToPlot = False
 				self.svgLastPath = 0
 				if self.serialPort is not None:
-					unused_button = ebb_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
+					unused_button = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
 					self.svgNodeCount = 0;
 					self.svgLayer = self.options.layerNumber
 					self.plotDocument()
@@ -344,8 +344,7 @@ class FourxiDrawClass(inkex.Effect):
 		self.svgDataRead = False
 		self.UpdateSVGWCBData(self.svg)
 		if self.serialPort is not None:
-			if not ((self.options.mode == "manual") and (self.options.manualType == "bootload")):
-				ebb_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
+			grbl_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
 			grbl_serial.closePort(self.serialPort)	
 		
 	def resumePlotSetup(self):
@@ -438,10 +437,10 @@ class FourxiDrawClass(inkex.Effect):
 
 		if self.options.setupType == "align-mode":
 			self.penUp()
-			ebb_motion.sendDisableMotors(self.serialPort)	
+			grbl_motion.sendDisableMotors(self.serialPort)	
 
 		elif self.options.setupType == "toggle-pen":
-			ebb_motion.TogglePen(self.serialPort)
+			grbl_motion.TogglePen(self.serialPort)
 
 	def manualCommand(self):
 		"""Execute commands in the "manual" mode/tab"""
@@ -464,7 +463,7 @@ class FourxiDrawClass(inkex.Effect):
 			self.EnableMotors()
 
 		elif self.options.manualType == "disable-motors":
-			ebb_motion.sendDisableMotors(self.serialPort)	
+			grbl_motion.sendDisableMotors(self.serialPort)	
 
 		elif self.options.manualType == "version-check":
 			strVersion = grbl_serial.query(self.serialPort, '$I\r')
@@ -1903,7 +1902,7 @@ class FourxiDrawClass(inkex.Effect):
 			if ((moveSteps1 != 0) or (moveSteps2 != 0)): # if at least one motor step is required for this move....
 	
 				if (not self.resumeMode) and (not self.bStopped):
-					ebb_motion.doXYMove(self.serialPort, moveSteps2, moveSteps1, moveTime)			
+					grbl_motion.doXYMove(self.serialPort, moveSteps2, moveSteps1, moveTime)			
 					if (moveTime > 50):
 						if self.options.mode != "manual":
 							time.sleep(float(moveTime - 10)/1000.0)  # pause before issuing next command
@@ -1919,7 +1918,7 @@ class FourxiDrawClass(inkex.Effect):
 					# if spewSegmentDebugData:			
 					#	inkex.errormsg('\nfCurrX,fCurrY (x = %1.2f, y = %1.2f) ' % (self.fCurrX, self.fCurrY))
 						
-		strButton = ebb_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
+		strButton = grbl_motion.QueryPRGButton(self.serialPort)	# Query if button pressed
 		if strButton[0] == '1': # button pressed
 			self.svgNodeCount = self.nodeCount - 1;
 			self.svgPausedPosX = self.fCurrX - fourxidraw_conf.StartPosX	# self.svgLastKnownPosX
@@ -1975,7 +1974,7 @@ class FourxiDrawClass(inkex.Effect):
 			vTime += self.options.penLiftDelay	
 			if (vTime < 0): # Do not allow negative delay times
 				vTime = 0	
-			ebb_motion.sendPenUp(self.serialPort, vTime)		
+			grbl_motion.sendPenUp(self.serialPort, vTime)		
 			if (vTime > 50):
 				if self.options.mode != "manual":
 					time.sleep(float(vTime - 10)/1000.0)  # pause before issuing next command
@@ -1996,7 +1995,7 @@ class FourxiDrawClass(inkex.Effect):
 				vTime += self.options.penLowerDelay	
 				if (vTime < 0): # Do not allow negative delay times
 					vTime = 0
-				ebb_motion.sendPenDown(self.serialPort, vTime)						
+				grbl_motion.sendPenDown(self.serialPort, vTime)						
 				if (vTime > 50):
 					if self.options.mode != "manual":
 						time.sleep(float(vTime - 10)/1000.0)  # pause before issuing next command
