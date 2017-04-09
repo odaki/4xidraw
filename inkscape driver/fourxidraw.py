@@ -223,6 +223,9 @@ class FourxiDrawClass(inkex.Effect):
 		self.warnings = {}
 		self.warnOutOfBounds = False
 
+        def createMotion(self):
+                self.motion = GrblMotion(self.serialPort, fourxidraw_conf.DPI_16X, self.options.penUpPosition, self.options.penDownPosition)
+
 	def effect(self):
 		'''Main entry point: check to see which mode/tab is selected, and act accordingly.'''
 
@@ -265,7 +268,7 @@ class FourxiDrawClass(inkex.Effect):
 				self.PrintInLayersMode = False
 				self.plotCurrentLayer = True
 				if self.serialPort is not None:
-                                        self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
+                                        self.createMotion()
 					self.svgNodeCount = 0
 					self.svgLastPath = 0
 					self.svgLayer = 12345;  # indicate (to resume routine) that we are plotting all layers.
@@ -312,7 +315,7 @@ class FourxiDrawClass(inkex.Effect):
 				self.LayersFoundToPlot = False
 				self.svgLastPath = 0
 				if self.serialPort is not None:
-                                        self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
+                                        self.createMotion()
 					self.svgNodeCount = 0;
 					self.svgLayer = self.options.layerNumber
 					self.plotDocument()
@@ -431,7 +434,7 @@ class FourxiDrawClass(inkex.Effect):
 		if self.serialPort is None:
 			return
 
-                self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
+                self.createMotion()
                 
 		if self.options.setupType == "align-mode":
 			self.penUp()
@@ -450,7 +453,7 @@ class FourxiDrawClass(inkex.Effect):
 		if self.serialPort is None:
 			return 
 
-                self.motion = GrblMotion(self.serialPort, self.options.penUpPosition, self.options.penDownPosition)
+                self.createMotion()
                 
 		if self.options.manualType == "raise-pen":
 			self.penUp()
@@ -1191,9 +1194,9 @@ class FourxiDrawClass(inkex.Effect):
 
 		# Maximum travel speed
 		if (self.virtualPenIsUp):	
-			speedLimit = self.PenUpSpeed  / self.stepsPerInch	# Units of speedLimit: inches/second
+			speedLimit = self.PenUpSpeed/self.stepsPerInch	# Units of speedLimit: inches/second
 		else:		
-			speedLimit = self.PenDownSpeed  / self.stepsPerInch
+			speedLimit = self.PenDownSpeed/self.stepsPerInch
 
 		TrajDists = array('f')	 # float, Segment length (distance) when arriving at the junction
 		TrajVels = array('f')	 # float, Velocity when arriving at the junction
@@ -1419,7 +1422,7 @@ class FourxiDrawClass(inkex.Effect):
 		for i in xrange(1, TrajLength):			
 			self.plotSegmentWithVelocity(inputPath[i][0] , inputPath[i][1] ,TrajVels[i-1] , TrajVels[i])
 
-	def plotSegmentWithVelocity(self, xDest, yDest, Vi, Vf ):
+	def plotSegmentWithVelocity(self, xDest, yDest, Vi, Vf):
 		''' 
 		Control the serial port to command the machine to draw
 		a straight line segment, with basic acceleration support. 
@@ -1432,7 +1435,7 @@ class FourxiDrawClass(inkex.Effect):
 		of which has constant velocity. 
 		Send commands out the com port as a set of short line segments
 		(dx, dy) with specified durations (in ms) of how long each segment
-		takes to draw.the segments take to draw. 
+		takes to draw.
 		Uses linear ("trapezoid") acceleration and deceleration strategy.
 		
 		Inputs are expected be in units of inches (for distance) 
@@ -1474,8 +1477,8 @@ class FourxiDrawClass(inkex.Effect):
 		finalVel = Vf * self.stepsPerInch		# Translate from "inches per second"
 
 		# Look at distance to move along 45-degree axes, for native motor steps:
-		motorSteps1 = int (round(xMovementIdeal + yMovementIdeal)) # Number of native motor steps required, Axis 1
-		motorSteps2 = int (round(xMovementIdeal - yMovementIdeal)) # Number of native motor steps required, Axis 2
+		motorSteps1 = int(xMovementIdeal)
+		motorSteps2 = int(yMovementIdeal)
 
 		plotDistance = plot_utils.distance(motorSteps1, motorSteps2)
 		if (plotDistance < 1.0): # if total movement is less than one step, skip this movement.
@@ -1631,8 +1634,6 @@ class FourxiDrawClass(inkex.Effect):
 					distArray.append(position)		# Estimated distance along direction of travel				
 					if spewSegmentDebugData:
 						inkex.errormsg('Coast Distance: '+str(coastingDistance))
-
-
 	
 				intervals = int(math.floor(tDecelMax / timeSlice))	# Number of intervals during deceleration
 				
@@ -1648,7 +1649,6 @@ class FourxiDrawClass(inkex.Effect):
 						distArray.append(position)		# Estimated distance along direction of travel
 					if spewSegmentDebugData:
 						inkex.errormsg('Decel intervals: '+str(intervals))
-
 			else:
 				''' 
 				# Case 3: 'Triangle' 
@@ -1886,13 +1886,13 @@ class FourxiDrawClass(inkex.Effect):
 			prevMotor1 += moveSteps1
 			prevMotor2 += moveSteps2
 
-			xSteps = (moveSteps1 + moveSteps2)/2.0	# Result will be a float.
-			ySteps = (moveSteps1 - moveSteps2)/2.0	
+			xSteps = moveSteps1
+			ySteps = moveSteps2
 
 			if ((moveSteps1 != 0) or (moveSteps2 != 0)): # if at least one motor step is required for this move....
 	
 				if (not self.resumeMode) and (not self.bStopped):
-					self.motion.doXYMove(moveSteps2, moveSteps1, moveTime)			
+					self.motion.doXYMove(moveSteps1, moveSteps2, moveTime)
 					if (moveTime > 50):
 						if self.options.mode != "manual":
 							time.sleep(float(moveTime - 10)/1000.0)  # pause before issuing next command

@@ -70,37 +70,31 @@ Values below this point have been carefully chosen, and generaly do not need to 
 adjusted in everyday use. That said, proceed with caution, and keep a backup copy.
 '''
 
-#Page size values typically do not need to be changed. They primarily affect viewpoint and centering.
-#Measured in page pixelssteps.  Default printable area for 4xiDraw is 300 x 218 mm
+# Page size values typically do not need to be changed. They primarily affect viewpoint and centering.
+# Measured in page pixelssteps.  Default printable area for 4xiDraw is 300 x 218 mm
 
 PageWidthIn = 11.81		# Default page width in inches 	300 mm = about 11.81 inches
 PageHeightIn = 8.58		# Default page height in inches 	218 mm = about 8.58 inches
 
 
-#Machine resolution: Used in converting drawing size to motor steps.
-DPI_16X = 2032			#DPI ("dots per inch") @ 16X microstepping.  Standard value: 2032, or 80 steps per mm.  
+# Machine resolution: Used in converting drawing size to motor steps.
+DPI_16X = 100*25.4		# DPI ("dots per inch") @ 16X microstepping.  Standard value: 100 steps per mm.  
 
-SpeedScale = 24950		#Maximum (110%) speed, in steps per second. 
-						# Note that 25 kHz is the absolute maximum speed (steps per second) for the EBB.
+SpeedScale = 24950		# Maximum (110%) speed, in steps per second. 
 
-StartPosX = 0			#parking position, in pixels. Default: 0
-StartPosY = 0			#parking position, in pixels. Default: 0
+StartPosX = 0			# parking position, in pixels. Default: 0
+StartPosY = 0			# parking position, in pixels. Default: 0
 
 
-#Acceleration rates and motion-control time slices:
-AccelTime = .2			#Seconds of acceleration to reach full speed WITH PEN DOWN
-AccelTimePU = .5		#Seconds of acceleration to reach full speed WITH PEN UP.
-AccelTimePUHR = .15		#Seconds of acceleration to reach full speed WITH PEN UP in slower high-res mode.
+# Acceleration rates and motion-control time slices:
+AccelTime = .2			# Seconds of acceleration to reach full speed WITH PEN DOWN
+AccelTimePU = .5		# Seconds of acceleration to reach full speed WITH PEN UP.
+AccelTimePUHR = .15		# Seconds of acceleration to reach full speed WITH PEN UP in slower high-res mode.
 
-TimeSlice = 0.025		#Interval, in seconds, of when to update the motors.
+TimeSlice = 0.025		# Interval, in seconds, of when to update the motors.
 
-#Short-move pen-up distance threshold, below which we use the faster pen-down acceleration rate:
-ShortThreshold = 1.0	#Distance Threshold (inches)
+# Short-move pen-up distance threshold, below which we use the faster pen-down acceleration rate:
+ShortThreshold = 1.0	# Distance Threshold (inches)
 
-#Skip pen-up moves shorter than this distance, when possible:
-MinGap = 0.010			#Distance Threshold (inches)
-
-# Servo Setup:
-ServoMax = 28000		#Highest allowed position; "100%" on the scale
-ServoMin = 7500			#Lowest allowed position; "0%" on the scale
-
+# Skip pen-up moves shorter than this distance, when possible:
+MinGap = 0.010			# Distance Threshold (inches)
