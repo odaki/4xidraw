@@ -1,7 +1,7 @@
 # grbl_serial.py
 # Serial connection utilities for RAMPS
 
-import serial, time
+import serial, time, sys, string
 import inkex
 import gettext
 
@@ -50,6 +50,8 @@ def openPort():
     foundPort = findPort()
     serialPort = testPort(foundPort)
     if serialPort:
+        # Set relative mode
+        query(serialPort, 'G91\r')
 	return serialPort
     return None
 
@@ -72,15 +74,6 @@ def query(comPort, cmd):
 		# get new response to replace null response if necessary
 		response = comPort.readline()
 		nRetryCount += 1
-	    if cmd.strip().lower() not in ["v","i","a", "mr","pi","qm"]: #!!
-		# Most queries return an "OK" after the data requested.
-		# We skip this for those few queries that do not return an extra line.
-		unused_response = comPort.readline() # read in extra blank/OK line
-		nRetryCount = 0
-		while (len(unused_response) == 0) and (nRetryCount < 100):
-		    # get new response to replace null response if necessary
-		    unused_response = comPort.readline()
-		    nRetryCount += 1
 	except:
 	    inkex.errormsg(gettext.gettext("Error reading serial data."))
 	return response
@@ -90,6 +83,7 @@ def query(comPort, cmd):
 def command(comPort, cmd):
     if (comPort is not None) and (cmd is not None):
 	try:
+            comPort.flushInput()
 	    comPort.write(cmd)
 	    response = comPort.readline()
 	    nRetryCount = 0
@@ -97,8 +91,8 @@ def command(comPort, cmd):
 		# get new response to replace null response if necessary
 		response = comPort.readline()
 		nRetryCount += 1
-		if response.strip().startswith("OK"):
-		    pass  # 	inkex.errormsg( 'OK after command: ' + cmd ) #Debug option: indicate which command.
+		if response.strip().startswith("ok"):
+		    pass
 		else:
 		    if (response != ''):
 			inkex.errormsg('Error: Unexpected response from GRBL.') 
@@ -106,8 +100,10 @@ def command(comPort, cmd):
 			inkex.errormsg('   Response: ' + str(response.strip()))
 		    else:
 			inkex.errormsg('GRBL Serial Timeout after command: ' + cmd)
+                        sys.exit()
 	except:
-	    inkex.errormsg( 'Failed after command: ' + cmd )
+	    inkex.errormsg('Failed after command: ' + cmd)
+            sys.exit()
 	    pass 
 
 if __name__ == "__main__":

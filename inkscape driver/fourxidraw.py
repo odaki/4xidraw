@@ -284,7 +284,6 @@ class FourxiDrawClass(inkex.Effect):
 						fX = self.svgPausedPosX_Old + fourxidraw_conf.StartPosX
 						fY = self.svgPausedPosY_Old + fourxidraw_conf.StartPosY
 						self.resumeMode = False
-	
 						self.plotSegmentWithVelocity(fX, fY, 0, 0)
 						
 						self.resumeMode = True
@@ -345,9 +344,9 @@ class FourxiDrawClass(inkex.Effect):
 
 		self.svgDataRead = False
 		self.UpdateSVGWCBData(self.svg)
-		#!!if self.serialPort is not None:
-		#!!    grbl_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
-		#!!    grbl_serial.closePort(self.serialPort)	
+		if self.serialPort is not None:
+		    grbl_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
+		    grbl_serial.closePort(self.serialPort)	
 		
 	def resumePlotSetup(self):
 		self.LayerFound = False
@@ -541,7 +540,7 @@ class FourxiDrawClass(inkex.Effect):
 				fX = self.ptFirst[0]
 				fY = self.ptFirst[1] 
 				self.nodeCount = self.nodeTarget
-				self.plotSegmentWithVelocity(fX, fY, 0, 0)
+				#!!self.plotSegmentWithVelocity(fX, fY, 0, 0)
 				
 			if (not self.bStopped): 
 				if (self.options.mode == "plot") or (self.options.mode == "layers") or (self.options.mode == "resume"):
@@ -1109,7 +1108,7 @@ class FourxiDrawClass(inkex.Effect):
 				plot_utils.subdivideCubicPath(sp, 0.02 / self.options.smoothness)
 				nIndex = 0
 
-				singlePath = []		
+				singlePath = []
 				if self.plotCurrentLayer:
 					for csp in sp:
 						if self.bStopped:
@@ -1122,7 +1121,7 @@ class FourxiDrawClass(inkex.Effect):
 							fY = float(csp[1][1])
 
 						if nIndex == 0:
-							if (plot_utils.distance(fX - self.fCurrX,fY - self.fCurrY) > fourxidraw_conf.MinGap):
+							if (plot_utils.distance(fX - self.fCurrX, fY - self.fCurrY) > fourxidraw_conf.MinGap):
 								self.penUp()
 								self.plotSegmentWithVelocity(fX, fY, 0, 0)
 						elif nIndex == 1:
@@ -1207,8 +1206,8 @@ class FourxiDrawClass(inkex.Effect):
 
 		for i in xrange(1, TrajLength):
 			# Distance per segment:
-			tmpDist = plot_utils.distance(inputPath[i][0] - inputPath[i - 1][0] ,
-			inputPath[i][1] - inputPath[i - 1][1])
+			tmpDist = plot_utils.distance(inputPath[i][0] - inputPath[i - 1][0],
+			                              inputPath[i][1] - inputPath[i - 1][1])
 			TrajDists.append(tmpDist)
 			# Normalized unit vectors:
 			
@@ -1216,7 +1215,7 @@ class FourxiDrawClass(inkex.Effect):
 				tmpDist = 1
 			tmpX = (inputPath[i][0] - inputPath[i - 1][0]) / tmpDist
 			tmpY = (inputPath[i][1] - inputPath[i - 1][1]) / tmpDist
-			TrajVectors.append([tmpX,tmpY])
+			TrajVectors.append([tmpX, tmpY])
 
 		if spewTrajectoryDebugData:
 			for dist in TrajDists:
@@ -1419,8 +1418,8 @@ class FourxiDrawClass(inkex.Effect):
 
 			inkex.errormsg(' ')
 
-		for i in xrange(1, TrajLength):			
-			self.plotSegmentWithVelocity(inputPath[i][0] , inputPath[i][1] ,TrajVels[i-1] , TrajVels[i])
+		for i in xrange(1, TrajLength):
+			self.plotSegmentWithVelocity(inputPath[i][0], inputPath[i][1], TrajVels[i-1], TrajVels[i])
 
 	def plotSegmentWithVelocity(self, xDest, yDest, Vi, Vf):
 		''' 

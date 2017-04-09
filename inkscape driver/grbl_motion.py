@@ -39,40 +39,23 @@ class GrblMotion(object):
 
         def sendPenUp(self, PenDelay):
 	        if (self.portName is not None):
-		        strOutput = 'M3 S' + str(self.penUpPosition) + '\rG4 P' + str(PenDelay) + '\r'
+		        strOutput = 'M3 S' + str(self.penUpPosition) + '\r'
+		        grbl_serial.command(self.portName, strOutput)
+		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
 		        grbl_serial.command(self.portName, strOutput)
 
         def sendPenDown(self, PenDelay):
 	        if (self.portName is not None):
-		        strOutput = 'M3 S' + str(self.penDownPosition) + '\rG4 P' + str(PenDelay) + '\r'
+		        strOutput = 'M3 S' + str(self.penDownPosition) + '\r'
 		        grbl_serial.command(self.portName, strOutput)
-
-        def doXYAccelMove(self, deltaX, deltaY, vInitial, vFinal):
-	        # Move X/Y axes as: "AM,<initial_velocity>,<final_velocity>,<axis1>,<axis2><CR>"
-	        # Typically, this is wired up such that axis 1 is the Y axis and axis 2 is the X axis of motion.
-	        # On EggBot, Axis 1 is the "pen" motor, and Axis 2 is the "egg" motor.
-	        # Note that minimum move duration is 5 ms.
-	        # Important: Requires firmware version 2.4 or higher.
-	        if (self.portName is not None):
-		        strOutput = '' #!!','.join(['AM', str(vInitial), str(vFinal), str(deltaX), str(deltaY)]) + '\r'
+		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
 		        grbl_serial.command(self.portName, strOutput)
 
         def doXYMove(self, deltaX, deltaY, duration):
-	        # Move X/Y axes as: "SM,<move_duration>,<axis1>,<axis2><CR>"
-	        # Typically, this is wired up such that axis 1 is the Y axis and axis 2 is the X axis of motion.
-	        # On EggBot, Axis 1 is the "pen" motor, and Axis 2 is the "egg" motor.
 	        if (self.portName is not None):
                         moveX = deltaX/self.stepsPerInch*25.4
-                        moveY = deltaY/self.stepsPerInch*25.4
-                        maxMove = max(moveX, moveY)
+                        moveY = -deltaY/self.stepsPerInch*25.4
+                        maxMove = max(abs(moveX), abs(moveY))
                         rate = int(maxMove/(duration/60000.0))
-		        strOutput = 'F ' + str(rate) + ' X '+str(moveX) + ' Y '+str(moveY) + '\r'
-			#inkex.errormsg(strOutput)
+		        strOutput = 'G1 F' + str(rate) + ' X'+str(moveX) + ' Y'+str(moveY) + '\r'
 		        grbl_serial.command(self.portName, strOutput)
-
-        def doABMove(self, deltaA, deltaB, duration):
-	        # Issue command to move A/B axes as: "XM,<move_duration>,<axisA>,<axisB><CR>"
-	        # Then, <Axis1> moves by <AxisA> + <AxisB>, and <Axis2> as <AxisA> - <AxisB>
-	        if (self.portName is not None):
-		        strOutput = '' #!! ','.join(['XM', str(duration), str(deltaA), str(deltaB)]) + '\r'
-		        grbl_serial.command(self.portName, strOutput)				
