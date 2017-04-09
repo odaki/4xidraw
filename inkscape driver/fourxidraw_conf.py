@@ -44,6 +44,7 @@ penLowerRate = 150		# Default pen-lift servo speed when lowering
 autoRotate = True		# Print in portrait or landscape mode automatically
 constSpeed = False		# Use constant velocity mode when pen is down
 reportTime = False		# Report time elapsed
+logSerial = False		# Log serial communication
 
 smoothness = 10.0		# Curve smoothing (default: 10.0)
 cornering = 10.0		# Cornering speed factor (default: 10.0)

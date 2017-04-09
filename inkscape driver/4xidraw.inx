@@ -65,6 +65,7 @@ of the pen for writing and drawing.
 <param indent="1" name="autoRotate" type="boolean" _gui-text="Auto-rotate page when printing">true</param>	
 <param indent="1" name="constSpeed" type="boolean" _gui-text="Use constant speed when pen is down">false</param>	
 <param indent="1" name="reportTime" type="boolean" _gui-text="Report time elapsed after each drawing">false</param> 
+<param indent="1" name="logSerial" type="boolean" _gui-text="Log serial communication">true</param> 
 
 <param indent="1" name="smoothness" type="float" min=".1" max="100" _gui-text="Curve smoothing (default: 10.0):">10.0</param>
 <param indent="1" name="cornering" type="float" min=".1" max="100" _gui-text="Cornering speed factor (default: 10.0):">10.0</param>

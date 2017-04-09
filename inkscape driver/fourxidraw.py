@@ -36,6 +36,7 @@ import string
 import time
 
 import grbl_serial
+from grbl_serial import GrblSerial
 from grbl_motion import GrblMotion
 import plot_utils		# https://github.com/evil-mad/plotink  Requires version 0.4
 
@@ -117,6 +118,11 @@ class FourxiDrawClass(inkex.Effect):
 			dest="reportTime", default=fourxidraw_conf.reportTime,
 			help="Report time elapsed")
 
+		self.OptionParser.add_option("--logSerial",
+			action="store", type="inkbool",
+			dest="logSerial", default=fourxidraw_conf.logSerial,
+			help="Log serial communication")
+
 		self.OptionParser.add_option("--smoothness",
 			action="store", type="float",
 			dest="smoothness", default=fourxidraw_conf.smoothness,
@@ -152,7 +158,7 @@ class FourxiDrawClass(inkex.Effect):
 			dest="fileOutput", default=fourxidraw_conf.fileOutput,
 			help="Output updated contents of SVG on stdout")
 
-		self.serialPort = None
+                self.serialPort = None
 		self.bPenIsUp = None  # Initial state of pen is neither up nor down, but _unknown_.
 		self.virtualPenIsUp = False  # Keeps track of pen postion when stepping through plot before resuming
 		self.ignoreLimits = False
@@ -258,54 +264,52 @@ class FourxiDrawClass(inkex.Effect):
 				return	
 
 		if skipSerial == False:
-			self.serialPort = grbl_serial.openPort()
+                        self.serialPort = grbl_serial.openPort(self.options.logSerial)
 			if self.serialPort is None:
 				inkex.errormsg(gettext.gettext("Failed to connect to 4xiDraw. :("))
-		
+		                sys.exit
+                        else:
+                                self.createMotion()
+
 			if self.options.mode == "plot": 
 				self.LayersFoundToPlot = False
 				useOldResumeData = False
 				self.PrintInLayersMode = False
 				self.plotCurrentLayer = True
-				if self.serialPort is not None:
-                                        self.createMotion()
-					self.svgNodeCount = 0
-					self.svgLastPath = 0
-					self.svgLayer = 12345;  # indicate (to resume routine) that we are plotting all layers.
-					self.plotDocument()
+				self.svgNodeCount = 0
+				self.svgLastPath = 0
+				self.svgLayer = 12345;  # indicate (to resume routine) that we are plotting all layers.
+			        if self.serialPort is not None:
+				        self.plotDocument()
 
 			elif self.options.mode == "resume":
-				if self.serialPort is None:
-					useOldResumeData = True
-				else:
-					useOldResumeData = False
-					self.resumePlotSetup()
-					if self.resumeMode:
-						fX = self.svgPausedPosX_Old + fourxidraw_conf.StartPosX
-						fY = self.svgPausedPosY_Old + fourxidraw_conf.StartPosY
-						self.resumeMode = False
-						self.plotSegmentWithVelocity(fX, fY, 0, 0)
+				useOldResumeData = False
+				self.resumePlotSetup()
+				if self.resumeMode:
+					fX = self.svgPausedPosX_Old + fourxidraw_conf.StartPosX
+					fY = self.svgPausedPosY_Old + fourxidraw_conf.StartPosY
+					self.resumeMode = False
+					self.plotSegmentWithVelocity(fX, fY, 0, 0)
 						
-						self.resumeMode = True
-						self.nodeCount = 0
-						self.plotDocument() 
+					self.resumeMode = True
+					self.nodeCount = 0
+					self.plotDocument() 
 						
-					elif (self.options.resumeType == "justGoHome"):
-						fX = fourxidraw_conf.StartPosX
-						fY = fourxidraw_conf.StartPosY 
+				elif (self.options.resumeType == "justGoHome"):
+					fX = fourxidraw_conf.StartPosX
+					fY = fourxidraw_conf.StartPosY 
 
-						self.plotSegmentWithVelocity(fX, fY, 0, 0)
+					self.plotSegmentWithVelocity(fX, fY, 0, 0)
 							
-						# New values to write to file:
-						self.svgNodeCount = self.svgNodeCount_Old
-						self.svgLastPath = self.svgLastPath_Old 
-						self.svgLastPathNC = self.svgLastPathNC_Old 
-						self.svgPausedPosX = self.svgPausedPosX_Old 
-						self.svgPausedPosY = self.svgPausedPosY_Old
-						self.svgLayer = self.svgLayer_Old 
-		
-					else:
-						inkex.errormsg(gettext.gettext("There does not seem to be any in-progress plot to resume."))
+					# New values to write to file:
+					self.svgNodeCount = self.svgNodeCount_Old
+					self.svgLastPath = self.svgLastPath_Old 
+					self.svgLastPathNC = self.svgLastPathNC_Old 
+					self.svgPausedPosX = self.svgPausedPosX_Old 
+					self.svgPausedPosY = self.svgPausedPosY_Old
+					self.svgLayer = self.svgLayer_Old 
+				else:
+					inkex.errormsg(gettext.gettext("There does not seem to be any in-progress plot to resume."))
 	
 			elif self.options.mode == "layers":
 				useOldResumeData = False 
@@ -313,11 +317,9 @@ class FourxiDrawClass(inkex.Effect):
 				self.plotCurrentLayer = False
 				self.LayersFoundToPlot = False
 				self.svgLastPath = 0
-				if self.serialPort is not None:
-                                        self.createMotion()
-					self.svgNodeCount = 0;
-					self.svgLayer = self.options.layerNumber
-					self.plotDocument()
+				self.svgNodeCount = 0;
+				self.svgLayer = self.options.layerNumber
+				self.plotDocument()
 
 			elif self.options.mode == "setup":
 				self.setupCommand()
@@ -344,9 +346,9 @@ class FourxiDrawClass(inkex.Effect):
 
 		self.svgDataRead = False
 		self.UpdateSVGWCBData(self.svg)
-		if self.serialPort is not None:
-		    grbl_motion.doTimedPause(self.serialPort, 10) # Pause a moment for underway commands to finish...
-		    grbl_serial.closePort(self.serialPort)	
+		#self.motion.doTimedPause(10) # Pause a moment for underway commands to finish...
+                if self.serialPort is not None:
+		        self.serialPort.close()
 		
 	def resumePlotSetup(self):
 		self.LayerFound = False
@@ -365,8 +367,6 @@ class FourxiDrawClass(inkex.Effect):
 				self.svgLayer = self.svgLayer_Old
 				if self.options.resumeType == "ResumeNow":
 					self.resumeMode = True
-				if self.serialPort is None:
-					return
 				self.penUp() 
 				self.EnableMotors()
 				self.fSpeed = self.PenDownSpeed 
@@ -430,9 +430,6 @@ class FourxiDrawClass(inkex.Effect):
 	def setupCommand(self):
 		"""Execute commands from the "setup" mode"""
 
-		if self.serialPort is None:
-			return
-
                 self.createMotion()
                 
 		if self.options.setupType == "align-mode":
@@ -449,11 +446,11 @@ class FourxiDrawClass(inkex.Effect):
 		if self.options.manualType == "none":
 			return
 			
-		if self.serialPort is None:
-			return 
-
                 self.createMotion()
                 
+		if self.serialPort is None:
+                        return
+
 		if self.options.manualType == "raise-pen":
 			self.penUp()
 
@@ -461,7 +458,7 @@ class FourxiDrawClass(inkex.Effect):
 			self.penDown()
 
 		elif self.options.manualType == "version-check":
-			strVersion = grbl_serial.query(self.serialPort, '$I\r')
+			strVersion = self.serialPort.query('$I\r')
 			inkex.errormsg('I asked GRBL for its version info, and it replied:\n ' + strVersion)
 
 		else:  # self.options.manualType is walk motor:

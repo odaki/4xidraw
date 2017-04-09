@@ -27,35 +27,35 @@ import grbl_serial
 import inkex
 
 class GrblMotion(object):
-        def __init__(self, portName, stepsPerInch, penUpPosition, penDownPosition):
-                self.portName = portName
+        def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition):
+                self.port = port
                 self.stepsPerInch = stepsPerInch
                 self.penUpPosition = penUpPosition
                 self.penDownPosition = penDownPosition
                 
         def IsPausePressed(self):
-	        if (self.portName is not None):
+	        if (self.port is not None):
 		        return False; # TODO
 
         def sendPenUp(self, PenDelay):
-	        if (self.portName is not None):
+	        if (self.port is not None):
 		        strOutput = 'M3 S' + str(self.penUpPosition) + '\r'
-		        grbl_serial.command(self.portName, strOutput)
+		        self.port.command(strOutput)
 		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
-		        grbl_serial.command(self.portName, strOutput)
+		        self.port.command(strOutput)
 
         def sendPenDown(self, PenDelay):
-	        if (self.portName is not None):
+	        if (self.port is not None):
 		        strOutput = 'M3 S' + str(self.penDownPosition) + '\r'
-		        grbl_serial.command(self.portName, strOutput)
+		        self.port.command(strOutput)
 		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
-		        grbl_serial.command(self.portName, strOutput)
+		        self.port.command(strOutput)
 
         def doXYMove(self, deltaX, deltaY, duration):
-	        if (self.portName is not None):
+	        if (self.port is not None):
                         moveX = deltaX/self.stepsPerInch*25.4
                         moveY = -deltaY/self.stepsPerInch*25.4
                         maxMove = max(abs(moveX), abs(moveY))
                         rate = int(maxMove/(duration/60000.0))
 		        strOutput = 'G1 F' + str(rate) + ' X'+str(moveX) + ' Y'+str(moveY) + '\r'
-		        grbl_serial.command(self.portName, strOutput)
+		        self.port.command(strOutput)
