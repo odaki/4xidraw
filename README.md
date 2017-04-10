@@ -1,19 +1,13 @@
-# AxiDraw
+# 4xiDraw
 
-The AxiDraw Extensions for Inkscape - Software to drive the AxiDraw drawing machine.
+The 4xiDraw Extensions for Inkscape - Software to drive the 4xiDraw drawing machine.
 
-More about AxiDraw:  http://www.axidraw.com/
+More about 4xiDraw:  https://www.instructables.com/id/4xiDraw/
 
 ---------
 
 
-**Normal install (Mac/Windows):**
-
-Please read through the installation instructions on the [AxiDraw documentation site](http://wiki.evilmadscientist.com/Axidraw_Software_Installation)
-
-**Manual install (Linux):**
-
-Install (along with the dependencies listed below) as you would any other Inkscape extension.
+Install as you would any other Inkscape extension.
 
 
 ---------
@@ -26,4 +20,4 @@ Dependencies:
 
 ---------
 
-[![Join the chat at https://gitter.im/evil-mad/axidraw](https://badges.gitter.im/evil-mad/axidraw.svg)](https://gitter.im/evil-mad/axidraw?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+This is based on the AxiDraw inkscape plugin, https://github.com/evil-mad/AxiDraw/
