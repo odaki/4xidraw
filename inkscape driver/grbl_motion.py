@@ -51,11 +51,8 @@ class GrblMotion(object):
 		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
 		        self.port.command(strOutput)
 
-        def doXYMove(self, deltaX, deltaY, duration):
+        def doAbsoluteMove(self, x, y, rate):
 	        if (self.port is not None):
-                        moveX = deltaX/self.stepsPerInch*25.4
-                        moveY = -deltaY/self.stepsPerInch*25.4
-                        maxMove = max(abs(moveX), abs(moveY))
-                        rate = int(maxMove/(duration/60000.0))
-		        strOutput = 'G1 F' + str(rate) + ' X'+str(moveX) + ' Y'+str(moveY) + '\r'
+		        strOutput = 'G1 F' + str(rate) + ' X'+str(25.4*x) + ' Y'+str(25.4*y) + '\r'
 		        self.port.command(strOutput)
+                        

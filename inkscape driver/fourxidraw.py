@@ -54,6 +54,7 @@ class FourxiDrawClass(inkex.Effect):
 	def __init__(self):
 		inkex.Effect.__init__(self)
 		self.start_time = time.time()
+                self.doLogDebug = False
 		
 		self.OptionParser.add_option("--mode",
 			action="store", type="string",
@@ -228,6 +229,16 @@ class FourxiDrawClass(inkex.Effect):
 		# which elements have received a warning
 		self.warnings = {}
 		self.warnOutOfBounds = False
+
+        def logDebug(self, msg):
+                if not self.doLogDebug:
+                        return
+                try:
+                        with open("4xidraw-debug.log", "a") as myfile:
+                                myfile.write('%s\n' % msg)
+                except:
+	                inkex.errormsg(gettext.gettext("Error logging debug data."))
+                
 
         def createMotion(self):
                 self.motion = GrblMotion(self.serialPort, fourxidraw_conf.DPI_16X, self.options.penUpPosition, self.options.penDownPosition)
@@ -494,7 +505,7 @@ class FourxiDrawClass(inkex.Effect):
 			# Cannot handle the document's dimensions!!!
 			inkex.errormsg(gettext.gettext(
 			'This document does not have valid dimensions.\r' +
-			'The document dimensions must be in either' +
+			'The document dimensions must be in either ' +
 			'millimeters (mm) or inches (in).\r\r'	+			
 			'Consider starting with the "Letter landscape" or ' +
 			'the "A4 landscape" template.\r\r' +
@@ -1086,13 +1097,16 @@ class FourxiDrawClass(inkex.Effect):
 		Plot the path while applying the transformation defined
 		by the matrix [matTransform].
 		'''
+                self.logDebug('plotPath: Enter')
 		# turn this path into a cubicsuperpath (list of beziers)...
 
 		d = path.get('d')
 		if len(simplepath.parsePath(d)) == 0:
+                        self.logDebug('plotPath: Zero length')
 			return
 
 		if self.plotCurrentLayer:
+                        self.logDebug('plotPath: plotCurrentLayer')
 			p = cubicsuperpath.parsePath(d)
 
 			# ...and apply the transformation to each point
@@ -1116,6 +1130,8 @@ class FourxiDrawClass(inkex.Effect):
 						else:
 							fX = float(csp[1][0]) # Set move destination
 							fY = float(csp[1][1])
+
+                                                self.logDebug('plotPath: X %f Y %f' % (fX, fY))
 
 						if nIndex == 0:
 							if (plot_utils.distance(fX - self.fCurrX, fY - self.fCurrY) > fourxidraw_conf.MinGap):
@@ -1152,7 +1168,7 @@ class FourxiDrawClass(inkex.Effect):
 		spewTrajectoryDebugData = False
 		
 		if spewTrajectoryDebugData:
-			inkex.errormsg('\nPlanTrajectory()\n')
+			self.logDebug('\nPlanTrajectory()\n')
 
 		if self.bStopped:
 			return
@@ -1170,7 +1186,7 @@ class FourxiDrawClass(inkex.Effect):
 		# Handle simple segments (lines) that do not require any complex planning:
 		if (len(inputPath) < 3):
 			if spewTrajectoryDebugData:
-				inkex.errormsg('Drawing straight line, not a curve.')	# This is the "SHORTPATH ESCAPE"
+				self.logDebug('Drawing straight line, not a curve.')	# This is the "SHORTPATH ESCAPE"
 			self.plotSegmentWithVelocity(xy[0], xy[1], 0, 0)							  
 			return
 
@@ -1179,8 +1195,8 @@ class FourxiDrawClass(inkex.Effect):
 
 		if spewTrajectoryDebugData:
 			for xy in inputPath:
-				inkex.errormsg('x: %1.2f,  y: %1.2f' %(xy[0],xy[1]))
-			inkex.errormsg('\nTrajLength: '+str(TrajLength) + '\n')
+				self.logDebug('x: %1.3f,  y: %1.3f' %(xy[0], xy[1]))
+			self.logDebug('\nTrajLength: '+str(TrajLength) + '\n')
 
 		# Absolute maximum and minimum speeds allowed: 
 
@@ -1216,8 +1232,8 @@ class FourxiDrawClass(inkex.Effect):
 
 		if spewTrajectoryDebugData:
 			for dist in TrajDists:
-				inkex.errormsg('TrajDists: %1.3f' % dist)
-			inkex.errormsg('\n')
+				self.logDebug('TrajDists: %1.3f' % dist)
+			self.logDebug('\n')
 
 		# time to reach full speed (from zero), at maximum acceleration. Defined in settings:
 
@@ -1233,10 +1249,10 @@ class FourxiDrawClass(inkex.Effect):
 		accelDist = 0.5 * accelRate * tMax  * tMax
 
 		if spewTrajectoryDebugData:		
-			inkex.errormsg('speedLimit: %1.3f' % speedLimit)
-			inkex.errormsg('tMax: %1.3f' % tMax)
-			inkex.errormsg('accelRate: %1.3f' % accelRate)
-			inkex.errormsg('accelDist: %1.3f' % accelDist)
+			self.logDebug('speedLimit: %1.3f' % speedLimit)
+			self.logDebug('tMax: %1.3f' % tMax)
+			self.logDebug('accelRate: %1.3f' % accelRate)
+			self.logDebug('accelDist: %1.3f' % accelDist)
 			CosinePrintArray = array('f')
 			
 		'''
@@ -1322,7 +1338,7 @@ class FourxiDrawClass(inkex.Effect):
 				# accelerate to maximum speed or come to a full stop before this vertex.
 				VcurrentMax = speedLimit
 				if spewTrajectoryDebugData:
-					inkex.errormsg('Speed Limit on vel : '+str(i))
+					self.logDebug('Speed Limit on vel : '+str(i))
 			else:
 				# There is _not necessarily_ enough distance in the segment for us to either
 				# accelerate to maximum speed or come to a full stop before this vertex.
@@ -1333,7 +1349,7 @@ class FourxiDrawClass(inkex.Effect):
 					VcurrentMax = speedLimit
 					
 				if spewTrajectoryDebugData:
-					inkex.errormsg('TrajVels I: %1.3f' % VcurrentMax)
+					self.logDebug('TrajVels I: %1.3f' % VcurrentMax)
 	
 			'''
 			Velocity at vertex: Part II 
@@ -1369,17 +1385,17 @@ class FourxiDrawClass(inkex.Effect):
 				VcurrentMax = VjunctionMax
 				
 			TrajVels.append(VcurrentMax)	# "Forward-going" speed limit for velocity at this particular vertex.
-		TrajVels.append(0.0 	)				# Add zero velocity, for final vertex.
+		TrajVels.append(0.0)			# Add zero velocity, for final vertex.
 
 		if spewTrajectoryDebugData:
-			inkex.errormsg(' ')
+			self.logDebug('')
 			for dist in CosinePrintArray:
-				inkex.errormsg('Cosine Factor: %1.3f' % dist)
-			inkex.errormsg(' ')
+				self.logDebug('Cosine Factor: %1.3f' % dist)
+			self.logDebug('')
 			
 			for dist in TrajVels:
-				inkex.errormsg('TrajVels II: %1.3f' % dist)
-			inkex.errormsg(' ')	
+				self.logDebug('TrajVels II: %1.3f' % dist)
+			self.logDebug('')	
 
 		'''			
 		Velocity at vertex: Part III
@@ -1402,7 +1418,7 @@ class FourxiDrawClass(inkex.Effect):
 				VInitMax = plot_utils.vInitial_VF_A_Dx(Vfinal,-accelRate,SegLength)
 
 				if spewTrajectoryDebugData:
-					inkex.errormsg('VInit Calc: (Vfinal = %1.3f, accelRate = %1.3f, SegLength = %1.3f) ' 
+					self.logDebug('VInit Calc: (Vfinal = %1.3f, accelRate = %1.3f, SegLength = %1.3f) ' 
 					% (Vfinal, accelRate, SegLength))
 
 				if (VInitMax < Vinitial):
@@ -1411,9 +1427,9 @@ class FourxiDrawClass(inkex.Effect):
 				
 		if spewTrajectoryDebugData:
 			for dist in TrajVels:
-				inkex.errormsg('TrajVels III: %1.3f' % dist)
+				self.logDebug('TrajVels III: %1.3f' % dist)
 
-			inkex.errormsg(' ')
+			self.logDebug('')
 
 		for i in xrange(1, TrajLength):
 			self.plotSegmentWithVelocity(inputPath[i][0], inputPath[i][1], TrajVels[i-1], TrajVels[i])
@@ -1439,14 +1455,14 @@ class FourxiDrawClass(inkex.Effect):
 		
 		'''	
 
-		spewSegmentDebugData = False
-# 		spewSegmentDebugData = True
+#		spewSegmentDebugData = False
+ 		spewSegmentDebugData = True
 
 		if spewSegmentDebugData:
-			inkex.errormsg('\nPlotSegment (x = %1.2f, y = %1.2f, Vi = %1.2f, Vf = %1.2f) ' 
+			self.logDebug('\nPlotSegment(x = %1.2f, y = %1.2f, Vi = %1.2f, Vf = %1.2f) ' 
 			% (xDest, yDest, Vi, Vf))
 			if self.resumeMode:	
-				inkex.errormsg('resumeMode is active')
+				self.logDebug('resumeMode is active')
 
 		ConstantVelMode = False
 		if (self.options.constSpeed and not self.virtualPenIsUp):
@@ -1501,419 +1517,9 @@ class FourxiDrawClass(inkex.Effect):
 			speedLimit = self.PenDownSpeed
 			accelRate = speedLimit / fourxidraw_conf.AccelTime	
 			
-		if (initialVel > speedLimit):
-			initialVel = speedLimit
-		if (finalVel > speedLimit):
-			finalVel = speedLimit
-
-		# Times to reach maximum speed, from our initial velocity 
-		# vMax = vi + a*t  =>  t = (vMax - vi)/a
-		# vf = vMax - a*t   =>  t = -(vf - vMax)/a = (vMax - vf)/a
-		# -- These are _maximum_ values. We often do not have enough time/space to reach full speed.
-
-		tAccelMax = (speedLimit - initialVel) / accelRate
-		tDecelMax = (speedLimit - finalVel) / accelRate	
-
-		if spewSegmentDebugData:
-			inkex.errormsg('accelRate: ' + str(accelRate))
-			inkex.errormsg('speedLimit: ' + str(speedLimit))
-			inkex.errormsg('initialVel: ' + str(initialVel))
-			inkex.errormsg('finalVel: ' + str(finalVel))
-			inkex.errormsg('tAccelMax: ' + str(tAccelMax))
-			inkex.errormsg('tDecelMax: ' + str(tDecelMax))
-
-	
-		# Distance that is required to reach full speed, from our start at speed initialVel:
-		# distance = vi * t + (1/2) a t^2
-		accelDistMax = (initialVel * tAccelMax) + (0.5 * accelRate * tAccelMax * tAccelMax)
-		# Use the same model for deceleration distance; modeling it with backwards motion:
-		decelDistMax = (finalVel * tDecelMax) + (0.5 * accelRate * tDecelMax * tDecelMax)
-
-		# time slices: Slice travel into intervals that are (say) 30 ms long.
-		timeSlice = fourxidraw_conf.TimeSlice	# Default slice intervals
-
-		self.nodeCount += 1		# This whole segment move counts as ONE pause/resume node in our plot
-		
-		if self.resumeMode:
-			if (self.nodeCount >= (self.nodeTarget)):
-				self.resumeMode = False
-				if (not self.virtualPenIsUp):
-					self.penDown()	
-
-		# Declare arrays:
-		# These are _normally_ 4-byte integers, but could (theoretically) be 2-byte integers on some systems.
-		#  if so, this could cause errors in rare cases (very large/long moves, etc.). 
-		# Set up an alert system, just in case!
-
-		durationArray = array('I') # unsigned integer for duration -- up to 65 seconds for a move if only 2 bytes.
-		distArray = array('f')	# float
-		destArray1 = array('i')	# signed integer
-		destArray2 = array('i')	# signed integer
-
-		timeElapsed = 0.0		
-		position = 0.0
-		velocity = initialVel
-		
-		'''
-		
-		Next, we wish to estimate total time duration of this segment. 
-		In doing so, we must consider the possible cases:
-
-		Case 1: 'Trapezoid'
-			Segment length is long enough to reach full speed.
-			Segment length > accelDistMax + decelDistMax
-			We will get to full speed, with an opportunity to "coast" at full speed
-			in the middle.
-			
-		Case 2: 'Linear velocity ramp'
-			For small enough moves -- say less than 10 intervals (typ 500 ms),
-			we do not have significant time to ramp the speed up and down.
-			Instead, perform only a simple speed ramp between initial and final.
-			
-		Case 3: 'Triangle'
-			Segment length is not long enough to reach full speed.
-			Accelerate from initial velocity to a local maximum speed,
-			then decelerate from that point to the final velocity.
-
-		Case 4: 'Constant velocity'
-			Use a single, constant velocity for all pen-down movements.
-			Also a fallback position, when moves are too short for linear ramps.
-			
-		In each case, we ultimately construct the trajectory in segments at constant velocity.
-		In cases 1-3, that set of segments approximates a linear slope in velocity. 
-		
-		Because we may end up with slight over/undershoot in position along the paths
-		with this approach, we perform a final scaling operation (to the correct distance) at the end.
-		
-		'''
-
-		if (ConstantVelMode == False) or (self.virtualPenIsUp):	# Allow accel when pen is up.		
-			if (plotDistance > (accelDistMax + decelDistMax + timeSlice * speedLimit)):
-				''' 
-				# Case 1: 'Trapezoid'
-				'''
-			
-				if spewSegmentDebugData:
-					inkex.errormsg('Type 1: Trapezoid'+ '\n')	
-				speedMax = speedLimit	# We will reach _full cruising speed_!
-			
-				intervals = int(math.floor(tAccelMax / timeSlice))	# Number of intervals during acceleration
-				
-				# If intervals == 0, then we are already at (or nearly at) full speed.
-				if (intervals > 0):			
-					timePerInterval = tAccelMax / intervals			
-	
-					velocityStepSize = (speedMax - initialVel)/(intervals + 1.0)	
-					# For six time intervals of acceleration, first interval is at velocity (max/7)
-					# 6th (last) time interval is at 6*max/7
-					# after this interval, we are at full speed.
-					
-					for index in xrange(0, intervals):		# Calculate acceleration phase
-						velocity += velocityStepSize
-						timeElapsed += timePerInterval
-						position += velocity * timePerInterval
-						durationArray.append(int(round(timeElapsed * 1000.0)))
-						distArray.append(position)		# Estimated distance along direction of travel
-					if spewSegmentDebugData:
-						inkex.errormsg('Accel intervals: '+str(intervals))
-							
-				# Add a center "coasting" speed interval IF there is time for it.
-				coastingDistance = plotDistance - (accelDistMax + decelDistMax)	
+		self.logDebug('doAbsoluteMove(%f, %f, %f)' % (xDest, yDest, speedLimit))
+		self.motion.doAbsoluteMove(xDest, yDest, speedLimit)
 								
-				if (coastingDistance > (timeSlice * speedMax)):
-					# There is enough time for (at least) one interval at full cruising speed.
-					velocity = speedMax
-					cruisingTime = coastingDistance / velocity
-					timeElapsed += cruisingTime
-					durationArray.append(int(round(timeElapsed * 1000.0)))
-					position += velocity * cruisingTime
-					distArray.append(position)		# Estimated distance along direction of travel				
-					if spewSegmentDebugData:
-						inkex.errormsg('Coast Distance: '+str(coastingDistance))
-	
-				intervals = int(math.floor(tDecelMax / timeSlice))	# Number of intervals during deceleration
-				
-				if (intervals > 0):	
-					timePerInterval = tDecelMax / intervals			
-					velocityStepSize = (speedMax - finalVel)/(intervals + 1.0)	
-	
-					for index in xrange(0, intervals):		# Calculate deceleration phase
-						velocity -= velocityStepSize
-						timeElapsed += timePerInterval
-						position += velocity * timePerInterval
-						durationArray.append(int(round(timeElapsed * 1000.0)))
-						distArray.append(position)		# Estimated distance along direction of travel
-					if spewSegmentDebugData:
-						inkex.errormsg('Decel intervals: '+str(intervals))
-			else:
-				''' 
-				# Case 3: 'Triangle' 
-				
-				We will _not_ reach full cruising speed, but let's go as fast as we can!
-				
-				We begin with given: initial velocity, final velocity,
-					maximum acceleration rate, distance to travel.
-				
-				The optimal solution is to accelerate at the maximum rate, to some maximum velocity Vmax,
-				and then to decelerate at same maximum rate, to the final velocity. 
-				This forms a triangle on the plot of V(t). 
-				
-				The value of Vmax -- and the time at which we reach it -- may be varied in order to
-				accommodate our choice of distance-traveled and velocity requirements.
-				(This does assume that the segment requested is self consistent, and planned 
-				with respect to our acceleration requirements.)
-				
-				In a more detail, with short notation Vi = initialVel, Vf = finalVel, 
-					Amax = accelRate, Dv = (Vf - Vi)
-				
-				(i) We accelerate from Vi, at Amax to some maximum velocity Vmax.
-				This takes place during an interval of time Ta. 
-				
-				(ii) We then decelerate from Vmax, to Vf, at the same maximum rate, Amax.
-				This takes place during an interval of time Td. 					
-				
-				(iii) The total time elapsed is Ta + Td
-				
-				(iv) v = v0 + a * t
-					=>	Vmax = Vi + Amax * Ta
-					and	Vmax = Vf + Amax * Td    (i.e., Vmax - Amax * Td = Vf)
-				
-					Thus Td = Ta - (Vf - Vi) / Amax, or    Td = Ta - (Dv / Amax)
-					
-				(v) The distance covered during the acceleration interval Ta is given by:
-					Xa = Vi * Ta + (1/2) Amax * Ta^2
-					
-					The distance covered during the deceleration interval Td is given by:
-					Xd = Vf * Td + (1/2) Amax * Td^2
-					
-					Thus, the total distance covered during interval Ta + Td is given by:
-					plotDistance = Xa + Xd = Vi * Ta + (1/2) Amax * Ta^2 + Vf * Td + (1/2) Amax * Td^2
-
-				(vi) Now substituting in Td = Ta - (Dv / Amax), we find:
-					Amax * Ta^2 + 2 * Vi * Ta + (Vi^2 - Vf^2)/(2 * Amax) - plotDistance = 0
-					
-					Solving this quadratic equation for Ta, we find:
-					Ta = (sqrt(2 * Vi^2 + 2 * Vf^2 + 4 * Amax * plotDistance) - 2 * Vi) / (2 * Amax)
-					
-					[We pick the positive root in the quadratic formula, since Ta must be positive.]
-				
-				(vii) From Ta and part (iv) above, we can find Vmax and Td.
-				 
-				'''
-				
-				if spewSegmentDebugData:	
-					inkex.errormsg('\nType 3: Triangle')	
-				Ta = (sqrt(2 * initialVel * initialVel + 2 * finalVel * finalVel + 4 * accelRate * plotDistance) 
-					- 2 * initialVel) / (2 * accelRate)
-					
-				if (Ta < 0) :
-					Ta = 0
-					if spewSegmentDebugData:	
-						inkex.errormsg('Warning: Negative transit time computed.') # Should not happen. :)
-
-				Vmax = initialVel + accelRate * Ta
-				if spewSegmentDebugData:	
-					inkex.errormsg('Vmax: '+str(Vmax))
-
-				intervals = int(math.floor(Ta / timeSlice))	# Number of intervals during acceleration
-
-				if (intervals == 0):
-					Ta = 0
-				Td = Ta - (finalVel - initialVel) / accelRate
-				Dintervals = int(math.floor(Td / timeSlice))	# Number of intervals during acceleration
-
-				if ((intervals + Dintervals) > 4):
-					if (intervals > 0):
-						if spewSegmentDebugData:	
-							inkex.errormsg('Triangle intervals UP: '+str(intervals))
-	
-						timePerInterval = Ta / intervals			
-						velocityStepSize = (Vmax - initialVel)/(intervals + 1.0)	
-						# For six time intervals of acceleration, first interval is at velocity (max/7)
-						# 6th (last) time interval is at 6*max/7
-						# after this interval, we are at full speed.
-						
-						for index in xrange(0, intervals):		# Calculate acceleration phase
-							velocity += velocityStepSize
-							timeElapsed += timePerInterval
-							position += velocity * timePerInterval
-							durationArray.append(int(round(timeElapsed * 1000.0)))
-							distArray.append(position)		# Estimated distance along direction of travel				
-					else:
-						if spewSegmentDebugData:	
-							inkex.errormsg('Note: Skipping accel phase in triangle.')
-							
-	
-					if (Dintervals > 0):
-						if spewSegmentDebugData:	
-							inkex.errormsg('Triangle intervals Down: '+str(intervals))
-		
-						timePerInterval = Td / Dintervals			
-						velocityStepSize = (Vmax - finalVel)/(Dintervals + 1.0)	
-						# For six time intervals of acceleration, first interval is at velocity (max/7)
-						# 6th (last) time interval is at 6*max/7
-						# after this interval, we are at full speed.
-						
-						for index in xrange(0, Dintervals):		# Calculate acceleration phase
-							velocity -= velocityStepSize
-							timeElapsed += timePerInterval
-							position += velocity * timePerInterval
-							durationArray.append(int(round(timeElapsed * 1000.0)))
-							distArray.append(position)		# Estimated distance along direction of travel				
-					else:
-						if spewSegmentDebugData:
-							inkex.errormsg('Note: Skipping decel phase in triangle.')
-				else:	
-					''' 
-					# Case 2: 'Linear or constant velocity changes' 
-					
-					Picked for segments that are shorter than 6 time slices. 
-					Linear velocity interpolation between two endpoints.
-					
-					Because these are typically short segments (not enough time for a good "triangle"--
-					we slightly boost the starting speed, by taking its average with Vmax for the segment.
-					
-					For very short segments (less than 2 time slices), use a single 
-						segment with constant velocity.
-					'''
-					
-					if spewSegmentDebugData:								
-						inkex.errormsg('Type 2: Linear'+ '\n')	
-					# xFinal = vi * t  + (1/2) a * t^2, and vFinal = vi + a * t 
-					# Combining these (with same t) gives: 2 a x = (vf^2 - vi^2)  => a = (vf^2 - vi^2)/2x
-					# So long as this 'a' is less than accelRate, we can linearly interpolate in velocity.
-
-					initialVel = (Vmax + initialVel) / 2  	# Boost initial speed for this segment
-					velocity = initialVel					# Boost initial speed for this segment
-
-					localAccel = (finalVel * finalVel - initialVel * initialVel)/ (2.0 * plotDistance)
-					
-					if (localAccel > accelRate):
-						localAccel = accelRate
-					elif (localAccel < -accelRate):
-						localAccel = -accelRate
-					if (localAccel == 0):
-						# Initial velocity = final velocity -> Skip to constant velocity routine.
-						ConstantVelMode = True
-					else:	
-						tSegment = (finalVel - initialVel) / localAccel		
-							
-					intervals = int(math.floor(tSegment / timeSlice))	# Number of intervals during deceleration
-					if (intervals > 1):
-						timePerInterval = tSegment / intervals			
-						velocityStepSize = (finalVel - initialVel)/(intervals + 1.0)										
-						# For six time intervals of acceleration, first interval is at velocity (max/7)
-						# 6th (last) time interval is at 6*max/7
-						# after this interval, we are at full speed.
-						
-						for index in xrange(0, intervals):		# Calculate acceleration phase
-							velocity += velocityStepSize
-							timeElapsed += timePerInterval
-							position += velocity * timePerInterval
-							durationArray.append(int(round(timeElapsed * 1000.0)))
-							distArray.append(position)		# Estimated distance along direction of travel				
-					else:
-						# Short segment; Not enough time for multiple segments at different velocities. 
-						initialVel = Vmax # These are _slow_ segments-- use fastest possible interpretation.
-						ConstantVelMode = True
-
-		if (ConstantVelMode):
-			'''
-			# Case 4: 'Constant Velocity mode'
-			'''
-			if spewSegmentDebugData:	
-				inkex.errormsg('-> [Constant Velocity Mode Segment]'+ '\n')	
-			# Single segment with constant velocity.
-			
-			if (self.options.constSpeed and not self.virtualPenIsUp):
-				velocity = self.PenDownSpeed 	# Constant pen-down speed		
-			elif (finalVel > initialVel):
-				velocity = finalVel
-			elif (initialVel > finalVel):
-				velocity = initialVel	
-			elif (initialVel > 0):	# Allow case of two are equal, but nonzero	
-				velocity = initialVel	
-			else: # Both endpoints are equal to zero.	
-				velocity = self.PenDownSpeed /10
-
-			if spewSegmentDebugData:	
-				inkex.errormsg('velocity: '+str(velocity))
-					
-			timeElapsed = plotDistance / velocity
-			durationArray.append(int(round(timeElapsed * 1000.0)))
-			distArray.append(plotDistance)		# Estimated distance along direction of travel
-			position += plotDistance
-			
-		''' 
-		The time & distance motion arrays for this path segment are now computed.
-		Next: We scale to the correct intended travel distance, 
-		round into integer motor steps and manage the process
-		of sending the output commands to the motors.
-		
-		'''
-		
-		if spewSegmentDebugData:	
-			inkex.errormsg('position/plotDistance: '+str(position/plotDistance))
-
-		for index in xrange (0, len(distArray)):
-			# Scale our trajectory to the "actual" travel distance that we need:
-			fractionalDistance = distArray[index] / position # Fractional position along the intended path
-			destArray1.append (int(round(fractionalDistance * motorSteps1)))
-			destArray2.append (int(round(fractionalDistance * motorSteps2)))
-
-		prevMotor1 = 0
-		prevMotor2 = 0
-		prevTime = 0
-		
-		for index in xrange (0, len(destArray1)):
-			moveSteps1 = destArray1[index] - prevMotor1
-			moveSteps2 = destArray2[index] - prevMotor2
-			moveTime = durationArray[index] - prevTime
-			prevTime = durationArray[index]
-
-			if (moveTime < 1):
-				moveTime = 1		# don't allow zero-time moves.
-	
-			if (abs((float(moveSteps1) / float(moveTime))) < 0.002):	
-				moveSteps1 = 0		# don't allow too-slow movements of this axis
-			if (abs((float(moveSteps2) / float(moveTime))) < 0.002):	
-				moveSteps2 = 0		# don't allow too-slow movements of this axis
-	
-			prevMotor1 += moveSteps1
-			prevMotor2 += moveSteps2
-
-			xSteps = moveSteps1
-			ySteps = moveSteps2
-
-			if ((moveSteps1 != 0) or (moveSteps2 != 0)): # if at least one motor step is required for this move....
-	
-				if (not self.resumeMode) and (not self.bStopped):
-					self.motion.doXYMove(moveSteps1, moveSteps2, moveTime)
-					if (moveTime > 50):
-						if self.options.mode != "manual":
-							time.sleep(float(moveTime - 10)/1000.0)  # pause before issuing next command
-					else:
-						if spewSegmentDebugData:	
-							inkex.errormsg('ShortMoves: ' + str(moveTime) + '.')
-
-					self.fCurrX += xSteps / self.stepsPerInch   # Update current position
-					self.fCurrY += ySteps / self.stepsPerInch		
-	
-					self.svgLastKnownPosX = self.fCurrX - fourxidraw_conf.StartPosX
-					self.svgLastKnownPosY = self.fCurrY - fourxidraw_conf.StartPosY	
-					# if spewSegmentDebugData:			
-					#	inkex.errormsg('\nfCurrX,fCurrY (x = %1.2f, y = %1.2f) ' % (self.fCurrX, self.fCurrY))
-						
-		if self.motion.IsPausePressed():
-			self.svgNodeCount = self.nodeCount - 1;
-			self.svgPausedPosX = self.fCurrX - fourxidraw_conf.StartPosX	# self.svgLastKnownPosX
-			self.svgPausedPosY = self.fCurrY - fourxidraw_conf.StartPosY	# self.svgLastKnownPosY
-			self.penUp()
-			inkex.errormsg('Plot paused by button press after node number ' + str(self.nodeCount) + '.')
-			inkex.errormsg('Use the "resume" feature to continue.')
-			self.bStopped = True
-			return
-		
 	def EnableMotors(self):
 		''' 
 		Enable motors, set native motor resolution, and set speed scales.

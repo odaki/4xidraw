@@ -50,8 +50,8 @@ def openPort(doLog):
     serialPort = testPort(foundPort)
     if serialPort:
         g = GrblSerial(serialPort, doLog)
-        # Set relative mode
-        g.command('G91\r')
+        # Set absolute mode
+        g.command('G90\r')
 	return g
     return None
 
@@ -68,7 +68,6 @@ class GrblSerial(object):
     def __init__(self, port, doLog):
         self.port = port
         self.doLog = doLog
-        self.log('CTOR', '')
 
     def log(self, type, text):
         ts = datetime.datetime.now()
@@ -104,10 +103,12 @@ class GrblSerial(object):
 	        response = self.readline()
 	        nRetryCount = 0
 	        while (len(response) == 0) and (nRetryCount < 100):
-                    self.log('QUERY', 'read %d' % nRetryCount)
+                    if self.doLog:
+                        self.log('QUERY', 'read %d' % nRetryCount)
 		    response = self.readline()
 		    nRetryCount += 1
-                self.log('QUERY', 'response is '+response)
+                if self.doLog:
+                    self.log('QUERY', 'response is '+response)
                 # swallow 'ok'
                 nRetryCount = 0
                 ok = self.readline()
@@ -130,7 +131,7 @@ class GrblSerial(object):
 		    # get new response to replace null response if necessary
 		    response = self.readline()
 		    nRetryCount += 1
-		if response.strip().startswith("ok"):
+		if 'ok' in response.strip():
 		    pass
 		else:
 		    if (response != ''):
