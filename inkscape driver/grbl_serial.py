@@ -16,7 +16,8 @@ def findPort():
     if comports:
 	comPortsList = list(comports())
 	for port in comPortsList:
-	    if port[1].startswith("USB2.0-Serial"): # Works for Ubuntu
+	    desc = port[1].lower()
+	    if "usb" in desc and "serial" in desc:
 		return port[0]
     return None
 
@@ -29,7 +30,7 @@ def testPort(comPort):
 	try:
 	    serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0,
                                        rtscts = False,
-                                       dsrdtr = True)
+                                       dsrdtr = False)
             time.sleep(2)
             while True:
 	        strVersion = serialPort.readline()
