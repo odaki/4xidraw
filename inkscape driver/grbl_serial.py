@@ -28,9 +28,7 @@ def testPort(comPort):
     '''		
     if comPort is not None:
 	try:
-	    serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0,
-                                       rtscts = False,
-                                       dsrdtr = False)
+	    serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0)
             time.sleep(2)
             while True:
 	        strVersion = serialPort.readline()
