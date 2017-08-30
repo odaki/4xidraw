@@ -17,7 +17,9 @@ def findPort():
 	comPortsList = list(comports())
 	for port in comPortsList:
 	    desc = port[1].lower()
-	    if "usb" in desc and "serial" in desc:
+	    isUsbSerial = "usb" in desc and "serial" in desc
+	    isArduino = "arduino" in desc 
+        if isUsbSerial or isArduino:
 		return port[0]
     return None
 
