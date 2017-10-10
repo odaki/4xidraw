@@ -28,8 +28,8 @@ If you are operating the 4xiDraw in "standalone" mode, that is, outside
  GUI, before 
 '''
 
-PenUpPos = 60			# Default pen-up position
-PenDownPos = 40			# Default pen-down position
+PenUpPos = 40			# Default pen-up position
+PenDownPos = 0			# Default pen-down position
 
 PenUpSpeed = 75
 PenDownSpeed = 25
