@@ -127,20 +127,20 @@ class GrblSerial(object):
                 self.write(cmd)
                 response = self.readline()
                 nRetryCount = 0
-                while (len(response) == 0) and (nRetryCount < 100):
+                while (len(response) == 0) and (nRetryCount < 30):
                     # get new response to replace null response if necessary
                     response = self.readline()
                     nRetryCount += 1
-                    if 'ok' in response.strip():
-                        pass
+                if 'ok' in response.strip():
+                    return
+                else:
+                    if (response != ''):
+                        inkex.errormsg('Error: Unexpected response from GRBL.') 
+                        inkex.errormsg('   Command: ' + cmd.strip())
+                        inkex.errormsg('   Response: ' + str(response.strip()))
                     else:
-                        if (response != ''):
-                            inkex.errormsg('Error: Unexpected response from GRBL.') 
-                            inkex.errormsg('   Command: ' + cmd.strip())
-                            inkex.errormsg('   Response: ' + str(response.strip()))
-                        else:
-                            inkex.errormsg('GRBL Serial Timeout after command: ' + cmd)
-                            sys.exit()
+                        inkex.errormsg('GRBL Serial Timeout after command: %s)' % cmd.strip())
+                        sys.exit()
             except:
                 inkex.errormsg('Failed after command: ' + cmd)
                 sys.exit()
