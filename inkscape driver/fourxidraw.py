@@ -300,7 +300,7 @@ class FourxiDrawClass(inkex.Effect):
           fX = self.svgPausedPosX_Old + fourxidraw_conf.StartPosX
           fY = self.svgPausedPosY_Old + fourxidraw_conf.StartPosY
           self.resumeMode = False
-          self.plotSegmentWithVelocity(fX, fY, 0, 0)
+          self.plotSegment(fX, fY)
             
           self.resumeMode = True
           self.nodeCount = 0
@@ -310,7 +310,7 @@ class FourxiDrawClass(inkex.Effect):
           fX = fourxidraw_conf.StartPosX
           fY = fourxidraw_conf.StartPosY 
 
-          self.plotSegmentWithVelocity(fX, fY, 0, 0)
+          self.plotSegment(fX, fY)
               
           # New values to write to file:
           self.svgNodeCount = self.svgNodeCount_Old
@@ -490,8 +490,7 @@ class FourxiDrawClass(inkex.Effect):
       self.ignoreLimits = True
       fX = self.fCurrX + nDeltaX   # Note: Walking motors is STRICTLY RELATIVE TO INITIAL POSITION.
       fY = self.fCurrY + nDeltaY
-      self.plotSegmentWithVelocity(fX, fY, 0, 0)
-
+      self.plotSegment(fX, fY)
 
 
   def plotDocument(self):
@@ -548,7 +547,7 @@ class FourxiDrawClass(inkex.Effect):
         fX = self.ptFirst[0]
         fY = self.ptFirst[1] 
         self.nodeCount = self.nodeTarget
-        #!!self.plotSegmentWithVelocity(fX, fY, 0, 0)
+        self.plotSegment(fX, fY)
         
       if (not self.bStopped): 
         if (self.options.mode == "plot") or (self.options.mode == "layers") or (self.options.mode == "resume"):
@@ -1136,7 +1135,7 @@ class FourxiDrawClass(inkex.Effect):
             if nIndex == 0:
               if (plot_utils.distance(fX - self.fCurrX, fY - self.fCurrY) > fourxidraw_conf.MinGap):
                 self.penUp()
-                self.plotSegmentWithVelocity(fX, fY, 0, 0)
+                self.plotSegment(fX, fY)
             elif nIndex == 1:
               self.penDown() 
             nIndex += 1
@@ -1187,7 +1186,7 @@ class FourxiDrawClass(inkex.Effect):
     if (len(inputPath) < 3):
       if spewTrajectoryDebugData:
         self.logDebug('Drawing straight line, not a curve.')  # This is the "SHORTPATH ESCAPE"
-      self.plotSegmentWithVelocity(xy[0], xy[1], 0, 0)                
+      self.plotSegment(xy[0], xy[1])                
       return
 
     # For other trajectories, we need to go deeper.
@@ -1211,11 +1210,9 @@ class FourxiDrawClass(inkex.Effect):
       speedLimit = self.PenDownSpeed/self.stepsPerInch
 
     TrajDists = array('f')   # float, Segment length (distance) when arriving at the junction
-    TrajVels = array('f')  # float, Velocity when arriving at the junction
     TrajVectors = []    # Array that will hold normalized unit vectors along each segment
 
     TrajDists.append(0.0) # First value, at time t = 0
-    TrajVels.append(0.0)  # First value, at time t = 0
 
     for i in xrange(1, TrajLength):
       # Distance per segment:
@@ -1235,220 +1232,18 @@ class FourxiDrawClass(inkex.Effect):
         self.logDebug('TrajDists: %1.3f' % dist)
       self.logDebug('\n')
 
-    # time to reach full speed (from zero), at maximum acceleration. Defined in settings:
-
-    if (self.virtualPenIsUp): 
-      tMax = fourxidraw_conf.AccelTimePUHR  # Allow faster pen-up acceleration
-    else:   
-      tMax = fourxidraw_conf.AccelTime      
-
-    # acceleration/deceleration rate: (Maximum speed) / (time to reach that speed)
-    accelRate = speedLimit / tMax
-    
-    # Distance that is required to reach full speed, from zero speed:  (1/2) a t^2
-    accelDist = 0.5 * accelRate * tMax  * tMax
-
-    if spewTrajectoryDebugData:   
-      self.logDebug('speedLimit: %1.3f' % speedLimit)
-      self.logDebug('tMax: %1.3f' % tMax)
-      self.logDebug('accelRate: %1.3f' % accelRate)
-      self.logDebug('accelDist: %1.3f' % accelDist)
-      CosinePrintArray = array('f')
-      
-    '''
-    Now, step through every vertex in the trajectory, and calculate what the speed
-    should be when arriving at that vertex.
-    
-    In order to do so, we need to understand how the trajectory will evolve in terms 
-    of position and velocity for a certain amount of time in the future, past that vertex. 
-    The most extreme cases of this is when we are traveling at 
-    full speed initially, and must come to a complete stop.
-      (This is actually more sudden than if we must reverse course-- that must also
-      go through zero velocity at the same rate of deceleration, and a full reversal
-      that does not occur at the path end might be able to have a 
-      nonzero velocity at the endpoint.)
-      
-    Thus, we look ahead from each vertex until one of the following occurs:
-      (1) We have looked ahead by at least tMax, or
-      (2) We reach the end of the path.
-
-    The data that we have to start out with is this:
-      - The position and velocity at the previous vertex
-      - The position at the current vertex
-      - The position at subsequent vertices
-      - The velocity at the final vertex (zero)
-
-    To determine the correct velocity at each vertex, we will apply the following rules:
-    
-    (A) For the first point, V(i = 0) = 0.
-
-    (B) For the last point point, Vi = 0 as well.
-    
-    (C) If the length of the segment is greater than the distance 
-    required to reach full speed, then the vertex velocity may be as 
-    high as the maximum speed.
-    
-    (D) However, if the length of the segment is less than the total distance
-    required to get to full speed, then the velocity at that vertex
-    is limited by to the value that can be reached from the initial
-    starting velocity, in the distance given.
-        
-    (E) The maximum velocity through the junction is also limited by the
-    turn itself-- if continuing straight, then we do not need to slow down
-    as much as if we were fully reversing course. 
-    We will model each corner as a short curve that we can accelerate around.
-    
-    (F) To calculate the velocity through each turn, we must _look ahead_ to
-    the subsequent (i+1) vertex, and determine what velocity 
-    is appropriate when we arrive at the next point. 
-    
-    Because future points may be close together-- the subsequent vertex could
-    occur just before the path end -- we actually must look ahead past the 
-    subsequent (i + 1) vertex, all the way up to the limits that we have described 
-    (e.g., tMax) to understand the subsequent behavior. Once we have that effective
-    endpoint, we can work backwards, ensuring that we will be able to get to the
-    final speed/position that we require. 
-    
-    A less complete (but far simpler) procedure is to first complete the trajectory
-    description, and then -- only once the trajectory is complete -- go back through,
-    but backwards, and ensure that we can actually decelerate to each velocity.
-
-    (G) The minimum velocity through a junction may be set to a constant.
-    There is often some (very slow) speed -- perhaps a few percent of the maximum speed
-    at which there are little or no resonances. Even when the path must directly reverse
-    itself, we can usually travel at a non-zero speed. This, of course, presumes that we 
-    still have a solution for getting to the endpoint at zero speed.
-    '''
-
-    delta = self.options.cornering / 1000  # Corner rounding/tolerance factor-- not sure how high this should be set.
-    
-    for i in xrange(1, TrajLength - 1):
-      Dcurrent = TrajDists[i]   # Length of the segment leading up to this vertex
-      VPrevExit = TrajVels[i-1] # Velocity when leaving previous vertex
-
-      '''
-      Velocity at vertex: Part I
-      
-      Check to see what our plausible maximum speeds are, from 
-      acceleration only, without concern about cornering, nor deceleration.
-      '''
-
-      if (Dcurrent > accelDist):    
-        # There _is_ enough distance in the segment for us to either
-        # accelerate to maximum speed or come to a full stop before this vertex.
-        VcurrentMax = speedLimit
-        if spewTrajectoryDebugData:
-          self.logDebug('Speed Limit on vel : '+str(i))
-      else:
-        # There is _not necessarily_ enough distance in the segment for us to either
-        # accelerate to maximum speed or come to a full stop before this vertex.
-        # Calculate how much we *can* swing the velocity by:  
-        
-        VcurrentMax = plot_utils.vFinal_Vi_A_Dx(VPrevExit,accelRate, Dcurrent)
-        if (VcurrentMax > speedLimit):
-          VcurrentMax = speedLimit
-          
-        if spewTrajectoryDebugData:
-          self.logDebug('TrajVels I: %1.3f' % VcurrentMax)
-  
-      '''
-      Velocity at vertex: Part II 
-      
-      Assuming that we have the same velocity when we enter and
-      leave a corner, our acceleration limit provides a velocity
-      that depends upon the angle between input and output directions.
-      
-      The cornering algorithm models the corner as a slightly smoothed corner,
-      to estimate the angular acceleration that we encounter:
-      https://onehossshay.wordpress.com/2011/09/24/improving_grbl_cornering_algorithm/
-      
-      The dot product of the unit vectors is equal to the cosine of the angle between the
-      two unit vectors, giving the deflection between the incoming and outgoing angles. 
-      Note that this angle is (pi - theta), in the convention of that article, giving us
-      a sign inversion. [cos(pi - theta) = - cos(theta)]
-      '''
-      
-      cosineFactor = - plot_utils.dotProductXY(TrajVectors[i - 1],TrajVectors[i]) 
-
-      if spewTrajectoryDebugData:
-        CosinePrintArray.append(cosineFactor) 
-
-      rootFactor = sqrt((1 - cosineFactor)/2)
-      denominator =  1 - rootFactor
-      if (denominator > 0.0001):
-        Rfactor = (delta * rootFactor) / denominator
-      else: 
-        Rfactor = 100000
-      VjunctionMax = sqrt(accelRate * Rfactor)
-      
-      if (VcurrentMax > VjunctionMax):
-        VcurrentMax = VjunctionMax
-        
-      TrajVels.append(VcurrentMax)  # "Forward-going" speed limit for velocity at this particular vertex.
-    TrajVels.append(0.0)      # Add zero velocity, for final vertex.
-
-    if spewTrajectoryDebugData:
-      self.logDebug('')
-      for dist in CosinePrintArray:
-        self.logDebug('Cosine Factor: %1.3f' % dist)
-      self.logDebug('')
-      
-      for dist in TrajVels:
-        self.logDebug('TrajVels II: %1.3f' % dist)
-      self.logDebug('') 
-
-    '''     
-    Velocity at vertex: Part III
-
-    We have, thus far, ensured that we could reach the desired velocities, going forward, but
-    have also assumed an effectively infinite deceleration rate.    
-
-    We now go through the completed array in reverse, limiting velocities to ensure that we 
-    can properly decelerate in the given distances.   
-    '''
-    
-    for j in xrange(1, TrajLength):
-      i = TrajLength - j  # Range: From (TrajLength - 1) down to 1.
-
-      Vfinal = TrajVels[i]
-      Vinitial = TrajVels[i - 1]
-      SegLength = TrajDists[i]
-
-      if (Vinitial > Vfinal) and (SegLength > 0): 
-        VInitMax = plot_utils.vInitial_VF_A_Dx(Vfinal,-accelRate,SegLength)
-
-        if spewTrajectoryDebugData:
-          self.logDebug('VInit Calc: (Vfinal = %1.3f, accelRate = %1.3f, SegLength = %1.3f) ' 
-          % (Vfinal, accelRate, SegLength))
-
-        if (VInitMax < Vinitial):
-          Vinitial = VInitMax 
-        TrajVels[i - 1] = Vinitial
-        
-    if spewTrajectoryDebugData:
-      for dist in TrajVels:
-        self.logDebug('TrajVels III: %1.3f' % dist)
-
-      self.logDebug('')
-
     for i in xrange(1, TrajLength):
-      self.plotSegmentWithVelocity(inputPath[i][0], inputPath[i][1], TrajVels[i-1], TrajVels[i])
+      self.plotSegment(inputPath[i][0], inputPath[i][1])
 
-  def plotSegmentWithVelocity(self, xDest, yDest, Vi, Vf):
+  def plotSegment(self, xDest, yDest):
     ''' 
     Control the serial port to command the machine to draw
-    a straight line segment, with basic acceleration support. 
+    a straight line segment.
     
     Inputs:   Destination (x,y)
-          Initial velocity
-          Final velocity
     
-    Method: Divide the segment up into smaller segments, each
-    of which has constant velocity. 
-    Send commands out the com port as a set of short line segments
-    (dx, dy) with specified durations (in ms) of how long each segment
-    takes to draw.
-    Uses linear ("trapezoid") acceleration and deceleration strategy.
+    Method: Divide the segment up into smaller segments.
+    Send commands out the com port as a set of short line segments (dx, dy)
     
     Inputs are expected be in units of inches (for distance) 
       or inches per second (for velocity).
@@ -1459,18 +1254,15 @@ class FourxiDrawClass(inkex.Effect):
     spewSegmentDebugData = True
 
     if spewSegmentDebugData:
-      self.logDebug('\nPlotSegment(x = %1.2f, y = %1.2f, Vi = %1.2f, Vf = %1.2f) ' 
-      % (xDest, yDest, Vi, Vf))
+      self.logDebug('\nPlotSegment(x = %1.2f, y = %1.2f) ' % (xDest, yDest))
       if self.resumeMode: 
         self.logDebug('resumeMode is active')
 
-    ConstantVelMode = False
-    if (self.options.constSpeed and not self.virtualPenIsUp):
-      ConstantVelMode = True
-
     if self.bStopped:
+      self.logDebug('Stopped')
       return
     if (self.fCurrX is None):
+      self.logDebug('No current position')
       return
 
     # check page size limits:
@@ -1480,45 +1272,8 @@ class FourxiDrawClass(inkex.Effect):
       if (xBounded or yBounded):
         self.warnOutOfBounds = True
 
-    # Distances to move, in motor-step units
-    xMovementIdeal = self.stepsPerInch * (xDest - self.fCurrX)  
-    yMovementIdeal = self.stepsPerInch * (yDest - self.fCurrY)
-
-    # Velocity inputs, in motor-step units
-    initialVel =  Vi * self.stepsPerInch    # Translate from "inches per second"
-    finalVel = Vf * self.stepsPerInch   # Translate from "inches per second"
-
-    # Look at distance to move along 45-degree axes, for native motor steps:
-    motorSteps1 = int(xMovementIdeal)
-    motorSteps2 = int(yMovementIdeal)
-
-    plotDistance = plot_utils.distance(motorSteps1, motorSteps2)
-    if (plotDistance < 1.0): # if total movement is less than one step, skip this movement.
-      return
-
-    if (self.options.reportTime): # Also keep track of distance:
-      if (self.virtualPenIsUp):
-        self.penUpDistance = self.penUpDistance + plotDistance
-      else:
-        self.penDownDistance = self.penDownDistance + plotDistance
-
-    # Maximum travel speeds:
-    # & acceleration/deceleration rate: (Maximum speed) / (time to reach that speed)
-
-    if (self.virtualPenIsUp): 
-      speedLimit = self.PenUpSpeed
-      
-      accelRate = speedLimit / fourxidraw_conf.AccelTimePUHR  # Allow faster pen-up acceleration
-      
-      if plotDistance < (self.stepsPerInch * fourxidraw_conf.ShortThreshold):
-        accelRate = speedLimit / fourxidraw_conf.AccelTime  
-        speedLimit = self.PenDownSpeed
-    else:   
-      speedLimit = self.PenDownSpeed
-      accelRate = speedLimit / fourxidraw_conf.AccelTime  
-      
-    self.logDebug('doAbsoluteMove(%f, %f, %f)' % (xDest, yDest, speedLimit))
-    self.motion.doAbsoluteMove(xDest, yDest, speedLimit)
+    self.logDebug('doAbsoluteMove(%f, %f)' % (xDest, yDest))
+    self.motion.doAbsoluteMove(xDest, yDest)
                 
   def EnableMotors(self):
     ''' 
