@@ -6,17 +6,20 @@ import inkex
 import gettext
 import datetime
 
-def findPort(): 
+def findPort():
     # Find a GRBL board connected to a USB port.
     try:
         from serial.tools.list_ports import comports
     except ImportError:
-        comports = None   
+        comports = None
         return None
     if comports:
         comPortsList = list(comports())
         for port in comPortsList:
-            if port[1].startswith("USB2.0-Serial"): # Works for Ubuntu
+            desc = port[1].lower()
+            isUsbSerial = "usb" in desc and "serial" in desc
+            isArduino = "arduino" in desc 
+            if isUsbSerial or isArduino:
                 return port[0]
     return None
 
@@ -24,12 +27,16 @@ def testPort(comPort):
     '''
     Return a SerialPort object for the first port with a GRBL board.
     YOU are responsible for closing this serial port!
-    '''   
+    '''
     if comPort is not None:
         try:
-            serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0,
-                                       rtscts = False,
-                                       dsrdtr = True)
+            serialPort = serial.Serial()
+            serialPort.baudrate = 115200
+            serialPort.timeout = 1.0
+            serialPort.rts = False
+            serialPort.dtr = True
+            serialPort.port = comPort
+            serialPort.open()
             time.sleep(2)
             while True:
                 strVersion = serialPort.readline()
@@ -88,7 +95,7 @@ class GrblSerial(object):
         if self.doLog:
             self.log('SEND', data)
         self.port.write(data)
-    
+
     def readline(self):
         data = self.port.readline()
         if self.doLog:
@@ -150,4 +157,3 @@ if __name__ == "__main__":
     serialPort = openPort(True)
 
     print('ver: '+serialPort.query('$I\r'))
-
