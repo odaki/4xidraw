@@ -27,32 +27,32 @@ import grbl_serial
 import inkex
 
 class GrblMotion(object):
-        def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition):
-                self.port = port
-                self.stepsPerInch = stepsPerInch
-                self.penUpPosition = penUpPosition
-                self.penDownPosition = penDownPosition
-                
-        def IsPausePressed(self):
-	        if (self.port is not None):
-		        return False; # TODO
+  def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition):
+    self.port = port
+    self.stepsPerInch = stepsPerInch
+    self.penUpPosition = penUpPosition
+    self.penDownPosition = penDownPosition
+    
+  def IsPausePressed(self):
+    if (self.port is not None):
+      return False; # TODO
 
-        def sendPenUp(self, PenDelay):
-	        if (self.port is not None):
-		        strOutput = 'M3 S' + str(self.penUpPosition) + '\r'
-		        self.port.command(strOutput)
-		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
-		        self.port.command(strOutput)
+  def sendPenUp(self, PenDelay):
+    if (self.port is not None):
+      strOutput = 'M3 S' + str(self.penUpPosition) + '\r'
+      self.port.command(strOutput)
+      strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
+      self.port.command(strOutput)
 
-        def sendPenDown(self, PenDelay):
-	        if (self.port is not None):
-		        strOutput = 'M3 S' + str(self.penDownPosition) + '\r'
-		        self.port.command(strOutput)
-		        strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
-		        self.port.command(strOutput)
+  def sendPenDown(self, PenDelay):
+    if (self.port is not None):
+      strOutput = 'M3 S' + str(self.penDownPosition) + '\r'
+      self.port.command(strOutput)
+      strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
+      self.port.command(strOutput)
 
-        def doAbsoluteMove(self, x, y, rate):
-	        if (self.port is not None):
-		        strOutput = 'G1 F' + str(rate) + ' X'+str(25.4*x) + ' Y'+str(25.4*y) + '\r'
-		        self.port.command(strOutput)
-                        
+  def doAbsoluteMove(self, x, y, rate):
+    if (self.port is not None):
+      strOutput = 'G1 F' + str(rate) + ' X'+str(25.4*x) + ' Y'+str(25.4*y) + '\r'
+      self.port.command(strOutput)
+      

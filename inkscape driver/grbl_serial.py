@@ -6,43 +6,43 @@ import inkex
 import gettext
 import datetime
 
-def findPort():	
+def findPort(): 
     # Find a GRBL board connected to a USB port.
     try:
-	from serial.tools.list_ports import comports
+        from serial.tools.list_ports import comports
     except ImportError:
-	comports = None		
-	return None
+        comports = None   
+        return None
     if comports:
-	comPortsList = list(comports())
-	for port in comPortsList:
-	    if port[1].startswith("USB2.0-Serial"): # Works for Ubuntu
-		return port[0]
+        comPortsList = list(comports())
+        for port in comPortsList:
+            if port[1].startswith("USB2.0-Serial"): # Works for Ubuntu
+                return port[0]
     return None
 
 def testPort(comPort):
     '''
     Return a SerialPort object for the first port with a GRBL board.
     YOU are responsible for closing this serial port!
-    '''		
+    '''   
     if comPort is not None:
-	try:
-	    serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0,
+        try:
+            serialPort = serial.Serial(comPort, baudrate = 115200, timeout = 1.0,
                                        rtscts = False,
                                        dsrdtr = True)
             time.sleep(2)
             while True:
-	        strVersion = serialPort.readline()
+                strVersion = serialPort.readline()
                 if len(strVersion) == 0:
                     break
-	        if strVersion and strVersion.startswith('Grbl'):
-		    return serialPort
-	    serialPort.close()
-	except serial.SerialException:
-	    pass
-	return None
+                if strVersion and strVersion.startswith('Grbl'):
+                    return serialPort
+            serialPort.close()
+        except serial.SerialException:
+            pass
+        return None
     else:
-	return None
+        return None
 
 # Return a GrblSerial object
 def openPort(doLog):
@@ -52,7 +52,7 @@ def openPort(doLog):
         g = GrblSerial(serialPort, doLog)
         # Set absolute mode
         g.command('G90\r')
-	return g
+        return g
     return None
 
 def escaped(s):
@@ -75,83 +75,78 @@ class GrblSerial(object):
             with open("4xidraw-serial.log", "a") as myfile:
                 myfile.write('--- %s\n%s\n%s\n' % (ts.isoformat(), type, escaped(text)))
         except:
-	    inkex.errormsg(gettext.gettext("Error logging serial data."))
+            inkex.errormsg(gettext.gettext("Error logging serial data."))
 
     def close(self):
         if self.port is not None:
-	    try:
-	        self.port.close()
-	    except serial.SerialException:
-	        pass
+            try:
+                self.port.close()
+            except serial.SerialException:
+                pass
 
     def write(self, data):
         if self.doLog:
             self.log('SEND', data)
-	self.port.write(data)
-        
+        self.port.write(data)
+    
     def readline(self):
-	data = self.port.readline()
+        data = self.port.readline()
         if self.doLog:
             self.log('RECV', data)
         return data
-        
+    
     def query(self, cmd):
         if (self.port is not None) and (cmd is not None):
-	    response = ''
-	    try:
-	        self.write(cmd)
-	        response = self.readline()
-	        nRetryCount = 0
-	        while (len(response) == 0) and (nRetryCount < 100):
+            response = ''
+            try:
+                self.write(cmd)
+                response = self.readline()
+                nRetryCount = 0
+                while (len(response) == 0) and (nRetryCount < 100):
                     if self.doLog:
                         self.log('QUERY', 'read %d' % nRetryCount)
-		    response = self.readline()
-		    nRetryCount += 1
-                if self.doLog:
-                    self.log('QUERY', 'response is '+response)
+                    response = self.readline()
+                    nRetryCount += 1
+                    if self.doLog:
+                        self.log('QUERY', 'response is '+response)
                 # swallow 'ok'
                 nRetryCount = 0
                 ok = self.readline()
-	        while (len(ok) == 0) and (nRetryCount < 100):
-		    ok = self.readline()
-		    nRetryCount += 1
+                while (len(ok) == 0) and (nRetryCount < 100):
+                    ok = self.readline()
+                    nRetryCount += 1
             except serial.SerialException:
-	        inkex.errormsg(gettext.gettext("Error reading serial data."))
-	    return response
+                inkex.errormsg(gettext.gettext("Error reading serial data."))
+            return response
         else:
-	    return None
+            return None
 
     def command(self, cmd):
         if (self.port is not None) and (cmd is not None):
-	    try:
-	        self.write(cmd)
-	        response = self.readline()
-	        nRetryCount = 0
-	        while (len(response) == 0) and (nRetryCount < 100):
-		    # get new response to replace null response if necessary
-		    response = self.readline()
-		    nRetryCount += 1
-		if 'ok' in response.strip():
-		    pass
-		else:
-		    if (response != ''):
-			inkex.errormsg('Error: Unexpected response from GRBL.') 
-			inkex.errormsg('   Command: ' + cmd.strip())
-			inkex.errormsg('   Response: ' + str(response.strip()))
-		    else:
-			inkex.errormsg('GRBL Serial Timeout after command: ' + cmd)
-                        sys.exit()
-	    except:
-	        inkex.errormsg('Failed after command: ' + cmd)
+            try:
+                self.write(cmd)
+                response = self.readline()
+                nRetryCount = 0
+                while (len(response) == 0) and (nRetryCount < 100):
+                    # get new response to replace null response if necessary
+                    response = self.readline()
+                    nRetryCount += 1
+                    if 'ok' in response.strip():
+                        pass
+                    else:
+                        if (response != ''):
+                            inkex.errormsg('Error: Unexpected response from GRBL.') 
+                            inkex.errormsg('   Command: ' + cmd.strip())
+                            inkex.errormsg('   Response: ' + str(response.strip()))
+                        else:
+                            inkex.errormsg('GRBL Serial Timeout after command: ' + cmd)
+                            sys.exit()
+            except:
+                inkex.errormsg('Failed after command: ' + cmd)
                 sys.exit()
-	        pass 
 
-def r(p):
-    l = p.readline()
-    print('READ %d: %s\n' % (len(l), l))
-    
 if __name__ == "__main__":
-    
+
     serialPort = openPort(True)
 
     print('ver: '+serialPort.query('$I\r'))
