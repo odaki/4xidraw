@@ -159,6 +159,13 @@ class FourxiDrawClass(inkex.Effect):
       dest="fileOutput", default=fourxidraw_conf.fileOutput,
       help="Output updated contents of SVG on stdout")
 
+    self.boundingBox = False
+    self.OptionParser.add_option("--boundingBox",
+                                 action="store_true",
+                                 dest="boundingBox",
+                                 help="Trace bounding box")
+    self.bb = { 'minX': 1e6, 'minY': 1e6, 'maxX': -1e6, 'maxY': -1e6 }
+    
     self.serialPort = None
     self.bPenIsUp = None  # Initial state of pen is neither up nor down, but _unknown_.
     self.virtualPenIsUp = False  # Keeps track of pen postion when stepping through plot before resuming
@@ -292,7 +299,15 @@ class FourxiDrawClass(inkex.Effect):
         self.svgLayer = 12345;  # indicate (to resume routine) that we are plotting all layers.
         if self.serialPort is not None:
           self.plotDocument()
-
+        if self.options.boundingBox:
+          print("Bounding box: %d %d %d %d" % (self.bb['minX'], self.bb['minY'], self.bb['maxX'], self.bb['maxY']))
+          self.options.boundingBox = False
+          self.plotSegment(self.bb['minX'], self.bb['minY'])
+          self.plotSegment(self.bb['minX'], self.bb['maxY'])
+          self.plotSegment(self.bb['maxX'], self.bb['maxY'])
+          self.plotSegment(self.bb['maxX'], self.bb['minY'])
+          self.plotSegment(self.bb['minX'], self.bb['minY'])
+          
       elif self.options.mode == "resume":
         useOldResumeData = False
         self.resumePlotSetup()
@@ -607,7 +622,8 @@ class FourxiDrawClass(inkex.Effect):
         if (node.get(inkex.addNS('groupmode', 'inkscape')) == 'layer'): 
           self.sCurrentLayerName = node.get(inkex.addNS('label', 'inkscape'))
           self.DoWePlotLayer(self.sCurrentLayerName)
-          self.penUp()
+          if not self.options.boundingBox:
+            self.penUp()
         self.recursivelyTraverseSvg(node, matNew, parent_visibility=v)    
 
       elif node.tag == inkex.addNS('use', 'svg') or node.tag == 'use':
@@ -1134,10 +1150,12 @@ class FourxiDrawClass(inkex.Effect):
 
             if nIndex == 0:
               if (plot_utils.distance(fX - self.fCurrX, fY - self.fCurrY) > fourxidraw_conf.MinGap):
-                self.penUp()
+                if not self.options.boundingBox:
+                  self.penUp()
                 self.plotSegment(fX, fY)
             elif nIndex == 1:
-              self.penDown() 
+              if not self.options.boundingBox:
+                self.penDown() 
             nIndex += 1
 
             singlePath.append([fX,fY])
@@ -1273,7 +1291,13 @@ class FourxiDrawClass(inkex.Effect):
         self.warnOutOfBounds = True
 
     self.logDebug('doAbsoluteMove(%f, %f)' % (xDest, yDest))
-    self.motion.doAbsoluteMove(xDest, yDest)
+    if self.options.boundingBox:
+      self.bb['minX'] = min(self.bb['minX'], xDest)
+      self.bb['minY'] = min(self.bb['minY'], yDest)
+      self.bb['maxX'] = max(self.bb['maxX'], xDest)
+      self.bb['maxY'] = max(self.bb['maxY'], yDest)
+    else:
+      self.motion.doAbsoluteMove(xDest, yDest)
                 
   def EnableMotors(self):
     ''' 
