@@ -19,7 +19,8 @@ def findPort():
             desc = port[1].lower()
             isUsbSerial = "usb" in desc and "serial" in desc
             isArduino = "arduino" in desc 
-            if isUsbSerial or isArduino:
+            isCDC = "CDC" in desc 
+            if isUsbSerial or isArduino or isCDC:
                 return port[0]
     return None
 
