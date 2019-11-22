@@ -1,5 +1,9 @@
 # 4xiDraw
 
+
+a small modification that enables the use of uart over wifi
+waiting to be merged
+
 The 4xiDraw Extensions for Inkscape - Software to drive the 4xiDraw drawing machine.
 
 More about 4xiDraw:  https://www.instructables.com/id/4xiDraw/
