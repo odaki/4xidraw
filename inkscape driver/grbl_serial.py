@@ -19,8 +19,10 @@ def findPort():
             desc = port[1].lower()
             isUsbSerial = "usb" in desc and "serial" in desc
             isArduino = "arduino" in desc or "acm" in desc
+            # I used NetBurner from eltima software to create the virtual com port 
+            isWifi = "eltima" in desc
             isCDC = "CDC" in desc 
-            if isUsbSerial or isArduino or isCDC:
+            if isUsbSerial or isArduino or isCDC or isWifi:
                 return port[0]
     return None
 
@@ -39,6 +41,9 @@ def testPort(comPort):
             serialPort.port = comPort
             serialPort.open()
             time.sleep(2)
+            #when using only RT and TX grbl will not reset 
+            serialPort.write('\x18')
+            time.sleep(1)
             while True:
                 strVersion = serialPort.readline()
                 if len(strVersion) == 0:
