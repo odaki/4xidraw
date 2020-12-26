@@ -41,6 +41,7 @@ from grbl_motion import GrblMotion
 import plot_utils   # https://github.com/evil-mad/plotink  Requires version 0.4
 
 import fourxidraw_conf  # Some settings can be changed here.
+import fourxidraw_compat # To bridge Python 2/3, Inkscape 0.*/1.*
 
 try:
   xrange = xrange
@@ -51,119 +52,143 @@ except:
 
 class FourxiDrawClass(inkex.Effect):
 
+  def compat_add_option(self, name, action, type, dest, default, help):
+    if fourxidraw_compat.isPython3():
+      self.arg_parser.add_argument(name,
+        action=action, type=fourxidraw_compat.compatGetArgumentTypeFromName(type),
+        dest=dest, default=default,
+        help=help)
+    else:
+      self.OptionParser.add_option(name,
+        action=action, type=type,
+        dest=dest, default=default,
+        help=help)
+
+  def compat_add_option_store_true(self, name, dest, help):
+    if fourxidraw_compat.isPython3():
+      self.arg_parser.add_argument(name,
+        action="store_true",
+        dest=dest,
+        help=help)
+    else:
+      self.OptionParser.add_option(name,
+        action="store_true",
+        dest=dest,
+        help=help)
+
   def __init__(self):
     inkex.Effect.__init__(self)
     self.start_time = time.time()
     self.doLogDebug = False
     
-    self.OptionParser.add_option("--mode",
+    self.compat_add_option("--mode",
       action="store", type="string",
       dest="mode", default="plot",
       help="Mode (or GUI tab) selected")
 
-    self.OptionParser.add_option("--penUpPosition",
+    self.compat_add_option("--penUpPosition",
       action="store", type="int",
       dest="penUpPosition", default=fourxidraw_conf.PenUpPos,
       help="Position of pen when lifted")
       
-    self.OptionParser.add_option("--penDownPosition",
+    self.compat_add_option("--penDownPosition",
       action="store", type="int",
       dest="penDownPosition", default=fourxidraw_conf.PenDownPos,
       help="Position of pen for painting")  
       
-    self.OptionParser.add_option("--setupType",
+    self.compat_add_option("--setupType",
       action="store", type="string",
       dest="setupType", default="align-mode",
       help="The setup option selected")
 
-    self.OptionParser.add_option("--penDownSpeed",
+    self.compat_add_option("--penDownSpeed",
       action="store", type="int",
       dest="penDownSpeed", default=fourxidraw_conf.PenDownSpeed,
       help="Speed (step/sec) while pen is down")
 
-    self.OptionParser.add_option("--penUpSpeed",
+    self.compat_add_option("--penUpSpeed",
       action="store", type="int",
       dest="penUpSpeed", default=fourxidraw_conf.PenUpSpeed,
       help="Rapid speed (percent) while pen is up")
 
-    self.OptionParser.add_option("--penLiftRate",
+    self.compat_add_option("--penLiftRate",
       action="store", type="int",
       dest="penLiftRate", default=fourxidraw_conf.penLiftRate,
       help="Rate of lifting pen ")
-    self.OptionParser.add_option("--penLiftDelay",
+    self.compat_add_option("--penLiftDelay",
       action="store", type="int",
       dest="penLiftDelay", default=fourxidraw_conf.penLiftDelay,
       help="Added delay after pen up (ms)")
       
-    self.OptionParser.add_option("--penLowerRate",
+    self.compat_add_option("--penLowerRate",
       action="store", type="int",
       dest="penLowerRate", default=fourxidraw_conf.penLowerRate,
       help="Rate of lowering pen ") 
-    self.OptionParser.add_option("--penLowerDelay",
+    self.compat_add_option("--penLowerDelay",
       action="store", type="int",
       dest="penLowerDelay", default=fourxidraw_conf.penLowerDelay,
       help="Added delay after pen down (ms)")
 
-    self.OptionParser.add_option("--autoRotate",
+    self.compat_add_option("--autoRotate",
       action="store", type="inkbool",
       dest="autoRotate", default=fourxidraw_conf.autoRotate,
       help="Print in portrait or landscape mode automatically")
 
-    self.OptionParser.add_option("--constSpeed",
+    self.compat_add_option("--constSpeed",
       action="store", type="inkbool",
       dest="constSpeed", default=fourxidraw_conf.constSpeed,
       help="Use constant velocity mode when pen is down")
       
-    self.OptionParser.add_option("--reportTime",
+    self.compat_add_option("--reportTime",
       action="store", type="inkbool",
       dest="reportTime", default=fourxidraw_conf.reportTime,
       help="Report time elapsed")
 
-    self.OptionParser.add_option("--logSerial",
+    self.compat_add_option("--logSerial",
       action="store", type="inkbool",
       dest="logSerial", default=fourxidraw_conf.logSerial,
       help="Log serial communication")
 
-    self.OptionParser.add_option("--smoothness",
+    self.compat_add_option("--smoothness",
       action="store", type="float",
       dest="smoothness", default=fourxidraw_conf.smoothness,
       help="Smoothness of curves")
 
-    self.OptionParser.add_option("--cornering",
+    self.compat_add_option("--cornering",
       action="store", type="float",
       dest="cornering", default=fourxidraw_conf.smoothness,
       help="Cornering speed factor")
 
-    self.OptionParser.add_option("--manualType",
+    self.compat_add_option("--manualType",
       action="store", type="string",
       dest="manualType", default="version-check",
       help="The active option when Apply was pressed")
 
-    self.OptionParser.add_option("--WalkDistance",
+    self.compat_add_option("--WalkDistance",
       action="store", type="float",
       dest="WalkDistance", default=1,
       help="Distance for manual walk")
 
-    self.OptionParser.add_option("--resumeType",
+    self.compat_add_option("--resumeType",
       action="store", type="string",
       dest="resumeType", default="ResumeNow",
       help="The active option when Apply was pressed")
       
-    self.OptionParser.add_option("--layerNumber",
+    self.compat_add_option("--layerNumber",
       action="store", type="int",
       dest="layerNumber", default=fourxidraw_conf.DefaultLayer,
       help="Selected layer for multilayer plotting")
 
-    self.OptionParser.add_option("--fileOutput",
+    self.compat_add_option("--fileOutput",
       action="store", type="inkbool",
       dest="fileOutput", default=fourxidraw_conf.fileOutput,
       help="Output updated contents of SVG on stdout")
 
     self.boundingBox = False
-    self.OptionParser.add_option("--boundingBox",
-                                 action="store_true",
-                                 dest="boundingBox",
-                                 help="Trace bounding box")
+    self.compat_add_option_store_true("--boundingBox",
+      dest="boundingBox",
+      help="Trace bounding box")
+      
     self.bb = { 'minX': 1e6, 'minY': 1e6, 'maxX': -1e6, 'maxY': -1e6 }
     
     self.serialPort = None
@@ -507,7 +532,6 @@ class FourxiDrawClass(inkex.Effect):
       fY = self.fCurrY + nDeltaY
       self.plotSegment(fX, fY)
 
-
   def plotDocument(self):
     '''Plot the actual SVG document, if so selected in the interface:'''
     # parse the svg data as a series of line segments and send each segment to be plotted
@@ -545,7 +569,7 @@ class FourxiDrawClass(inkex.Effect):
       sy = sx 
       Offset0 = 0.0
       Offset1 = 0.0
-    self.svgTransform = parseTransform('scale(%f,%f) translate(%f,%f)' % (sx, sy,Offset0, Offset1))
+    self.svgTransform = fourxidraw_compat.compatParseTransform('scale(%f,%f) translate(%f,%f)' % (sx, sy,Offset0, Offset1))
 
     self.penUp() 
     self.EnableMotors()
@@ -554,7 +578,7 @@ class FourxiDrawClass(inkex.Effect):
       # wrap everything in a try so we can for sure close the serial port 
       self.recursivelyTraverseSvg(self.svg, self.svgTransform)
       self.penUp()   # Always end with pen-up
- 
+
       # return to home after end of normal plot
       if ((not self.bStopped) and (self.ptFirst)):
         self.xBoundsMin = fourxidraw_conf.StartPosX
@@ -615,7 +639,7 @@ class FourxiDrawClass(inkex.Effect):
         pass
 
       # first apply the current matrix transform to this node's transform
-      matNew = composeTransform(matCurrent, parseTransform(node.get("transform")))
+      matNew = fourxidraw_compat.compatComposeTransform(matCurrent, fourxidraw_compat.compatParseTransform(node.get("transform")))
 
       if node.tag == inkex.addNS('g', 'svg') or node.tag == 'g':
 
@@ -1116,16 +1140,17 @@ class FourxiDrawClass(inkex.Effect):
     # turn this path into a cubicsuperpath (list of beziers)...
 
     d = path.get('d')
-    if len(simplepath.parsePath(d)) == 0:
+
+    if fourxidraw_compat.compatIsEmptyPath(d):
       self.logDebug('plotPath: Zero length')
       return
 
     if self.plotCurrentLayer:
       self.logDebug('plotPath: plotCurrentLayer')
-      p = cubicsuperpath.parsePath(d)
+      p = fourxidraw_compat.compatParseCubicSuperPath(d)
 
       # ...and apply the transformation to each point
-      applyTransformToPath(matTransform, p)
+      p = fourxidraw_compat.compatApplyTransformToPath(matTransform, p)
   
       # p is now a list of lists of cubic beziers [control pt1, control pt2, endpoint]
       # where the start-point is the last point in the previous segment.
@@ -1387,4 +1412,7 @@ class FourxiDrawClass(inkex.Effect):
       return True
 
 e = FourxiDrawClass()
-e.affect()
+if fourxidraw_compat.isPython3():
+    e.run()
+else:
+    e.affect()

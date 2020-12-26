@@ -6,6 +6,8 @@ import inkex
 import gettext
 import datetime
 
+import fourxidraw_compat # To bridge Python 2/3, Inkscape 0.*/1.*
+
 def findPort():
     # Find a GRBL board connected to a USB port.
     try:
@@ -41,14 +43,40 @@ def testPort(comPort):
             serialPort.port = comPort
             serialPort.open()
             time.sleep(2)
-            #when using only RT and TX grbl will not reset 
-            serialPort.write('\x18')
+            
+            # Opening the serial port may reset the unit, in which case we'll get a Grbl message
+            # 
+            # In my (Python3) setup, opening the port resets GRBL on the Arduino: I get a blank line, then a Grbl version
+            # line. If we don't pick this info up here and exit, then sending '\x18' causes a *second* reset - we end up
+            # having *two* Grbl version messages sent back! The second Grbl message appears as a response to the first
+            # command we sent, which causes an error "Error: Unexpected response from GRBL."
+            # 
+            # I'm making this conditional on Python3 because for all I know earlier versions act differently here. But it's
+            # possible that this behaviuor may occur with others. If we make the code unconditional we potentially incur
+            # 2 comms timeouts at 1 second each.
+            if fourxidraw_compat.isPython3():
+                nTryCount = 0
+                returnedMessage = ''
+                while (len(returnedMessage) == 0) and (nTryCount < 2):
+                    returnedMessage = serialPort.readline().decode().rstrip()
+                    nTryCount += 1
+                if len(returnedMessage) != 0:
+                    if returnedMessage.startswith('Grbl'):
+                        return serialPort
+            
+            # If opening the port hasn't caused a reset, send an explicit reset message
+            if fourxidraw_compat.isPython3():
+                serialPort.write(b'\x18')
+            else:
+                serialPort.write('\x18')
             time.sleep(1)
+            
             while True:
                 strVersion = serialPort.readline()
                 if len(strVersion) == 0:
                     break
-                if strVersion and strVersion.startswith('Grbl'):
+                grblTarget = b'Grbl' if fourxidraw_compat.isPython3() else 'Grbl'
+                if strVersion and strVersion.startswith(grblTarget):
                     return serialPort
             serialPort.close()
         except serial.SerialException:
@@ -100,10 +128,13 @@ class GrblSerial(object):
     def write(self, data):
         if self.doLog:
             self.log('SEND', data)
-        self.port.write(data)
+        if fourxidraw_compat.isPython3():
+            self.port.write(data.encode())
+        else:
+            self.port.write(data)
 
     def readline(self):
-        data = self.port.readline()
+        data = self.port.readline().decode().rstrip()
         if self.doLog:
             self.log('RECV', data)
         return data
