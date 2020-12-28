@@ -738,7 +738,7 @@ class FourxiDrawClass(inkex.Effect):
           if (doWePlotThisPath):
             self.pathcount += 1
             # Create a path with the outline of the rectangle
-            newpath = inkex.etree.Element(inkex.addNS('path', 'svg'))
+            newpath = fourxidraw_compat.compatEtreeElement(inkex.addNS('path', 'svg'))
             x = float(node.get('x'))
             y = float(node.get('y'))
             w = float(node.get('width'))
@@ -750,12 +750,12 @@ class FourxiDrawClass(inkex.Effect):
             if t:
               newpath.set('transform', t)
             a = []
-            a.append(['M ', [x, y]])
-            a.append([' l ', [w, 0]])
-            a.append([' l ', [0, h]])
-            a.append([' l ', [-w, 0]])
-            a.append([' Z', []])
-            newpath.set('d', simplepath.formatPath(a))
+            fourxidraw_compat.compatAppendCommand(a, 'M ', [x, y])
+            fourxidraw_compat.compatAppendCommand(a, ' l ', [w, 0])
+            fourxidraw_compat.compatAppendCommand(a, ' l ', [0, h])
+            fourxidraw_compat.compatAppendCommand(a, ' l ', [-w, 0])
+            fourxidraw_compat.compatAppendCommand(a, ' Z', [])
+            newpath.set('d', fourxidraw_compat.compatFormatPath(a))
             self.plotPath(newpath, matNew)
             
         elif node.tag == inkex.addNS('line', 'svg') or node.tag == 'line':
@@ -788,7 +788,7 @@ class FourxiDrawClass(inkex.Effect):
           if (doWePlotThisPath):
             self.pathcount += 1
             # Create a path to contain the line
-            newpath = inkex.etree.Element(inkex.addNS('path', 'svg'))
+            newpath = fourxidraw_compat.compatEtreeElement(inkex.addNS('path', 'svg'))
             x1 = float(node.get('x1'))
             y1 = float(node.get('y1'))
             x2 = float(node.get('x2'))
@@ -800,9 +800,9 @@ class FourxiDrawClass(inkex.Effect):
             if t:
               newpath.set('transform', t)
             a = []
-            a.append(['M ', [x1, y1]])
-            a.append([' L ', [x2, y2]])
-            newpath.set('d', simplepath.formatPath(a))
+            fourxidraw_compat.compatAppendCommand(a, 'M ', [x1, y1])
+            fourxidraw_compat.compatAppendCommand(a, ' L ', [x2, y2])
+            newpath.set('d', fourxidraw_compat.compatFormatPath(a))
             self.plotPath(newpath, matNew)
             
   
@@ -842,7 +842,7 @@ class FourxiDrawClass(inkex.Effect):
             d = "M " + pa[0]
             for i in range(1, len(pa)):
               d += " L " + pa[i]
-            newpath = inkex.etree.Element(inkex.addNS('path', 'svg'))
+            newpath = fourxidraw_compat.compatEtreeElement(inkex.addNS('path', 'svg'))
             newpath.set('d', d);
             s = node.get('style')
             if s:
@@ -889,7 +889,7 @@ class FourxiDrawClass(inkex.Effect):
             for i in xrange(1, len(pa)):
               d += " L " + pa[i]
             d += " Z"
-            newpath = inkex.etree.Element(inkex.addNS('path', 'svg'))
+            newpath = fourxidraw_compat.compatEtreeElement(inkex.addNS('path', 'svg'))
             newpath.set('d', d);
             s = node.get('style')
             if s:
@@ -951,7 +951,7 @@ class FourxiDrawClass(inkex.Effect):
                 '0 1 0 %f,%f ' % (x2, cy) + \
                 'A %f,%f ' % (rx, ry) + \
                 '0 1 0 %f,%f' % (x1, cy)
-              newpath = inkex.etree.Element(inkex.addNS('path', 'svg'))
+              newpath = fourxidraw_compat.compatEtreeElement(inkex.addNS('path', 'svg'))
               newpath.set('d', d);
               s = node.get('style')
               if s:
