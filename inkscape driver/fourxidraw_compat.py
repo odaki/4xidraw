@@ -22,16 +22,23 @@
 
 import builtins
 import sys
-# old
-import cspsubdiv
-from bezmisc import *
-from simpletransform import *
-# new
-from inkex import bezier
-from inkex import paths
 
 def isPython3():
     return sys.version_info[0] == 3
+
+# Import what's necessary to support the code paths that we're using
+if isPython3():
+    # new
+    import inkex
+    from inkex.paths import *
+    from inkex.transforms import *
+    from inkex import bezier
+    from lxml import etree
+else:
+    # old
+    import cspsubdiv
+    from bezmisc import *
+    from simpletransform import *
 
 # Convert from typenames to types
 def compatGetArgumentTypeFromName(type_name):
@@ -44,6 +51,34 @@ def compatGetArgumentTypeFromName(type_name):
         return getattr(builtins, type_name)
     except AttributeError:
         return None
+
+# DeprecationWarning: inkex.etree was removed, use "from lxml import etree"
+def compatEtreeElement(elem):
+
+    if isPython3():
+        return etree.Element(elem)
+    else:
+        return inkex.etree.Element(elem)
+
+# Behaviour change: 0.9.x accepts (requires?) spaces between commands and other elements, 1.x rejects them
+# This may be a consequence of simplepath.FormatPath(a) being deprecated/replaced by str(Path(a)) and differences in the relevant code
+def compatAppendCommand(a, command, data):
+
+    if isPython3():
+        # Remove any leading or trailing spaces in the command - it should be a single letter
+        a.append([command.strip(), data])
+    else:
+        # Keep any leading or trailing spaces - perhaps they are necessary for 0.9.x
+        a.append([command, data])
+
+# DeprecationWarning: simplepath.formatPath -> str(element.path) or str(Path(array))
+def compatFormatPath(a):
+ 
+    if isPython3():
+        return str(Path(a))
+    else:
+        return simplepath.formatPath(a)
+
 
 # DeprecationWarning: inkex.bezier.beziersplitatt -> Split bezier at given time
 def compatBezierSplitAtT(b, t):
@@ -89,7 +124,7 @@ def compatIsEmptyPath(stringRepresentation):
 def compatParseCubicSuperPath(stringRepresentation):
 
     if isPython3():
-        return paths.CubicSuperPath(paths.Path(stringRepresentation))
+        return CubicSuperPath(Path(stringRepresentation))
     else:
         return cubicsuperpath.parsePath(stringRepresentation)
 
