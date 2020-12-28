@@ -34,6 +34,8 @@ from math import sqrt
 import cspsubdiv
 from bezmisc import *
 
+import fourxidraw_compat # To bridge Python 2/3, Inkscape 0.*/1.*
+
 def version():
 	return "0.5"	# Version number for this document
 
@@ -177,11 +179,11 @@ def subdivideCubicPath( sp, flat, i=1 ):
 
 			b = ( p0, p1, p2, p3 )
 
-			if cspsubdiv.maxdist( b ) > flat:
+			if fourxidraw_compat.compatCspSubDivMaxDist( b ) > flat:
 				break
 			i += 1
 
-		one, two = beziersplitatt( b, 0.5 )
+		one, two = fourxidraw_compat.compatBezierSplitAtT( b, 0.5 )
 		sp[i - 1][2] = one[1]
 		sp[i][0] = two[2]
 		p = [one[2], one[3], two[1]]
