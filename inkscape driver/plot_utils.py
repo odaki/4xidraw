@@ -39,9 +39,7 @@ import fourxidraw_compat # To bridge Python 2/3, Inkscape 0.*/1.*
 def version():
 	return "0.5"	# Version number for this document
 
-pxPerInch = 90.0	# 90 px per inch, as of Inkscape 0.91
-					# Note that the SVG specification is for 96 px per inch; 
-					# Expect a change to 96 as of Inkscape 0.92.
+pxPerInch = fourxidraw_compat.compatPxPerInch()
 
 def distance( x, y ):
 	'''
@@ -153,6 +151,8 @@ def getLengthInches( altself, name ):
 			return (float( v ) / 6.0)	
 		elif u == 'pt':
 			return (float( v ) / 72.0)
+		elif u == 'px':
+			return (float( v ) / pxPerInch)
 		else:
 			# Unsupported units
 			return None

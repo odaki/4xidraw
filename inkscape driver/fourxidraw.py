@@ -431,7 +431,7 @@ class FourxiDrawClass(inkex.Effect):
     self.recursiveWCBDataScan(self.svg)
     if self.options.fileOutput:
       if (not self.svgDataRead): # if there is no WCB data, add some:
-        WCBlayer = inkex.etree.SubElement(self.svg, 'WCB')
+        WCBlayer = fourxidraw_compat.compatEtreeSubElement(self.svg, 'WCB')
         WCBlayer.set('layer', str(0))
         WCBlayer.set('node', str(0))      # node paused at, if saved in paused state
         WCBlayer.set('lastpath', str(0))    # Last path number that has been fully painted
