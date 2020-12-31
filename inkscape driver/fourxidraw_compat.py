@@ -52,6 +52,15 @@ def compatGetArgumentTypeFromName(type_name):
     except AttributeError:
         return None
 
+def compatPxPerInch():
+
+    if isPython3():
+        # Inkscape 1.x follows the SVG specification of 96 px per inch
+        return 96.0
+    else:
+        # 90 px per inch, as of Inkscape 0.91
+        return 90.0
+
 # DeprecationWarning: inkex.etree was removed, use "from lxml import etree"
 def compatEtreeElement(elem):
 
@@ -59,6 +68,14 @@ def compatEtreeElement(elem):
         return etree.Element(elem)
     else:
         return inkex.etree.Element(elem)
+
+# DeprecationWarning: inkex.etree was removed, use "from lxml import etree"
+def compatEtreeSubElement(a, b):
+
+    if isPython3():
+        return etree.SubElement(a, b)
+    else:
+        return inkex.etree.SubElement(a, b)
 
 # Behaviour change: 0.9.x accepts (requires?) spaces between commands and other elements, 1.x rejects them
 # This may be a consequence of simplepath.FormatPath(a) being deprecated/replaced by str(Path(a)) and differences in the relevant code
