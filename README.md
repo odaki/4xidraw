@@ -30,7 +30,7 @@ $N0=M3S90
 
 The main extension "4xiDraw/4xiDraw Control..." should work directly with Inkscape 1.0.1, but Inkscape 0.9.x will require some python modules and and Inkscape extensions to be installed, as set out below.
 
-Note that the "4xiDraw/Hatch Fill..." extension is not yet tested with Inkscape 1.0.1.
+Note that the "4xiDraw/Hatch Fill..." extension has not yet been upgraded to work with Inkscape 1.0.1/Python3.
 
 ### Python Modules
 
