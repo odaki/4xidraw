@@ -83,7 +83,6 @@ You can use this tab to send "manual" commands to the
 pen, or test communication
 with the machine.
 </_param>
-
 <param name="manualType" type="optiongroup" appearance="minimal"
 _gui-text="               Command: ">
 <_option value="none"           >- Select -</_option>
@@ -93,11 +92,12 @@ _gui-text="               Command: ">
 <_option value="walk-y-motor"   >Walk Carriage (Y)</_option>
 <_option value="version-check"  >Check GRBL Version</_option>
 <_option value="strip-data"     >Strip plotter data from file</_option>
+<_option value="grbl-command"   >Issue GRBL command</_option>
 </param>
 
-<param name="WalkDistance" type="float" min="-11" max="11" 
-_gui-text="Walk distance in inches (+ or -):">1.00</param>
+<param name="grblCommand" type="string" _gui-text="GRBL command:">$$</param>
 
+<param name="WalkDistance" type="float" min="-11" max="11" _gui-text="Walk distance in inches (+ or -):">1.00</param>
 
 <_param  indent="1" name="instructions_manual2" type="description" >
 Note: The manual "walk" commands move the motors

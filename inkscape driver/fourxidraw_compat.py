@@ -52,6 +52,13 @@ def compatGetArgumentTypeFromName(type_name):
     except AttributeError:
         return None
 
+def compatIsBasestring(obj):
+
+    if isPython3():
+        return isinstance(obj, str)
+    else:
+        return isinstance(obj, basestring)
+
 def compatPxPerInch():
 
     if isPython3():

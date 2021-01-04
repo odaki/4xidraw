@@ -169,6 +169,11 @@ class FourxiDrawClass(inkex.Effect):
       dest="WalkDistance", default=1,
       help="Distance for manual walk")
 
+    self.compat_add_option("--grblCommand",
+      action="store", type="string",
+      dest="grblCommand", default="$$",
+      help="GRBL command to execute")
+
     self.compat_add_option("--resumeType",
       action="store", type="string",
       dest="resumeType", default="ResumeNow",
@@ -511,6 +516,10 @@ class FourxiDrawClass(inkex.Effect):
     elif self.options.manualType == "version-check":
       strVersion = self.serialPort.query('$I\r')
       inkex.errormsg('I asked GRBL for its version info, and it replied:\n ' + strVersion)
+
+    elif self.options.manualType == "grbl-command":
+      strResponse = self.serialPort.query(self.options.grblCommand + '\r')
+      inkex.errormsg('GRBL command "' + self.options.grblCommand + '" got this reply:\n ' + strResponse)
 
     else:  # self.options.manualType is walk motor:
       if self.options.manualType == "walk-y-motor":
@@ -1012,7 +1021,7 @@ class FourxiDrawClass(inkex.Effect):
         elif node.tag == inkex.addNS('color-profile', 'svg') or node.tag == 'color-profile':
           # Gamma curves, color temp, etc. are not relevant to single color output
           pass
-        elif not isinstance(node.tag, basestring):
+        elif not fourxidraw_compat.compatIsBasestring(node.tag):
           # This is likely an XML processing instruction such as an XML
           # comment.  lxml uses a function reference for such node tags
           # and as such the node tag is likely not a printable string.
