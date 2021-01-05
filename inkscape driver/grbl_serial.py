@@ -151,14 +151,16 @@ class GrblSerial(object):
                         self.log('QUERY', 'read %d' % nRetryCount)
                     response = self.readline()
                     nRetryCount += 1
-                    if self.doLog:
-                        self.log('QUERY', 'response is '+response)
+                    
                 # swallow 'ok'
-                nRetryCount = 0
-                ok = self.readline()
-                while (len(ok) == 0) and (nRetryCount < 100):
-                    ok = self.readline()
-                    nRetryCount += 1
+                extra = self.readline()
+                while (len(extra) > 0 and extra != 'ok'):
+                    if self.doLog:
+                        self.log('QUERY', 'read extra: ' + extra)
+                    response = response + '\r' + extra
+                    extra = self.readline()
+                if self.doLog:
+                    self.log('QUERY', 'response is '+response)
             except serial.SerialException:
                 inkex.errormsg(gettext.gettext("Error reading serial data."))
             return response
