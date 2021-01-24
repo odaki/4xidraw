@@ -582,6 +582,7 @@ class FourxiDrawClass(inkex.Effect):
 
     self.penUp() 
     self.EnableMotors()
+    self.sCurrentLayerName = '(Not Set)'
 
     try:
       # wrap everything in a try so we can for sure close the serial port 
@@ -987,7 +988,7 @@ class FourxiDrawClass(inkex.Effect):
           pass
         elif (node.tag == inkex.addNS('text', 'svg') or node.tag == 'text' or
           node.tag == inkex.addNS('flowRoot', 'svg') or node.tag == 'flowRoot'):
-          if (not self.warnings.has_key('text')) and (self.plotCurrentLayer):
+          if (not 'text' in self.warnings) and (self.plotCurrentLayer):
             inkex.errormsg(gettext.gettext('Note: This file contains some plain text, found in a \nlayer named: "' + 
               self.sCurrentLayerName + '" .\n' +
               'Please convert your text into paths before drawing,  \n' +
@@ -997,7 +998,7 @@ class FourxiDrawClass(inkex.Effect):
             self.warnings['text'] = 1
           pass
         elif node.tag == inkex.addNS('image', 'svg') or node.tag == 'image':
-          if (not self.warnings.has_key('image')) and (self.plotCurrentLayer):
+          if (not 'image' in self.warnings) and (self.plotCurrentLayer):
             inkex.errormsg(gettext.gettext('Warning: in layer "' + 
             self.sCurrentLayerName + '" unable to draw bitmap images; ' +
             'Please convert images to line art before drawing. ' +
@@ -1029,7 +1030,7 @@ class FourxiDrawClass(inkex.Effect):
           # be very useful.
           pass
         else:
-          if (not self.warnings.has_key(str(node.tag))) and (self.plotCurrentLayer):
+          if (not str(node.tag) in self.warnings) and (self.plotCurrentLayer):
             t = str(node.tag).split('}')
             inkex.errormsg(gettext.gettext('Warning: in layer "' + 
               self.sCurrentLayerName + '" unable to draw <' + str(t[-1]) +
