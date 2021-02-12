@@ -37,15 +37,29 @@ class GrblMotion(object):
     if (self.port is not None):
       return False; # TODO
 
-  def sendPenUp(self, PenDelay):
+  def sendPenUp(self, PenDelay, fSpeed):
     if (self.port is not None):
       strOutput = 'M3 S' + str(self.penUpPosition) + '\r'
       self.port.command(strOutput)
+      if not fSpeed is None:
+        strOutput = 'G4 P0' + '\r'
+        self.port.command(strOutput)
+        strOutput = f'$110={fSpeed}' + '\r'
+        self.port.command(strOutput)
+        strOutput = f'$111={fSpeed}' + '\r'
+        self.port.command(strOutput)
       strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
       self.port.command(strOutput)
 
-  def sendPenDown(self, PenDelay):
+  def sendPenDown(self, PenDelay, fSpeed):
     if (self.port is not None):
+      if not fSpeed is None:
+          strOutput = 'G4 P0' + '\r'
+          self.port.command(strOutput)
+          strOutput = f'$110={fSpeed}' + '\r'
+          self.port.command(strOutput)
+          strOutput = f'$111={fSpeed}' + '\r'
+          self.port.command(strOutput)
       strOutput = 'M3 S' + str(self.penDownPosition) + '\r'
       self.port.command(strOutput)
       strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'

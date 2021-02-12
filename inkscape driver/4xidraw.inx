@@ -45,13 +45,25 @@ of the pen for writing and drawing.
 
 <page name='timing' _gui-text='Timing'>
 <_param name="instructions_timing1" type="description" appearance="header">Movement speeds:</_param>
-<param indent="1" name="penDownSpeed" type="int" min="1" max="110" _gui-text="Writing/Drawing speed (%):">25</param>	
-<param indent="1" name="penUpSpeed" type="int" min="1" max="110" _gui-text="Pen-up movement speed (%):">75</param>
+<_param indent="1" name="instructions_timing1" type="description"  >
+Set speeds here if you want to draw more slowly with the pen down. The speeds are in GRBL units
+for $110/$111: mm/min. This is useful if you are drawing with pens that can't supply ink above
+a certain speed: for instance Sakura Gelly Roll Moonlight pens start losing flow at about
+1,000 while Metallic pens are good at 2,000. When in this situation, enabling different speeds
+will let you keep pen-up speeds higher.
+</_param>
+<param indent="1" name="applySpeed" type="boolean" _gui-text="Whether to apply speeds to pen">false</param>	
+<param indent="1" name="penDownSpeed" type="int" min="1" max="10000" _gui-text="Writing/Drawing speed (mm/min):">1000</param>	
+<param indent="1" name="penUpSpeed" type="int" min="1" max="10000" _gui-text="Pen-up movement speed (mm/min):">5000</param>
 
 <_param name="instructions_timing3" type="description" appearance="header">Pen lift and lowering speeds:</_param>
-<param indent="1" name="penLiftRate" type="int" min="20" max="500" _gui-text="Pen raising speed (%/s):">150</param>
+<_param indent="1" name="instructions_timing3" type="description"  >
+Fine-tune speeds here - a higher speed will mean you waste less time waiting to move
+after raising or lowering the pen.
+</_param>
+<param indent="1" name="penLiftRate" type="int" min="20" max="1000" _gui-text="Pen raising speed (servo steps/s):">150</param>
 <param indent="1" name="penLiftDelay" type="int" min="-500" max="500" _gui-text="Added delay after raising pen (ms):">0</param>
-<param indent="1" name="penLowerRate" type="int" min="20" max="500" _gui-text="Pen lowering speed (%/s):">150</param>
+<param indent="1" name="penLowerRate" type="int" min="20" max="1000" _gui-text="Pen lowering speed (servo steps/s):">150</param>
 <param indent="1" name="penLowerDelay" type="int" min="-500" max="500" _gui-text="Added delay after lowering pen (ms):">0</param>
 
 <_param indent="2" name="instructions_timing4" type="description" xml:space="preserve">

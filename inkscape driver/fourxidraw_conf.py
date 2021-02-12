@@ -31,8 +31,9 @@ If you are operating the 4xiDraw in "standalone" mode, that is, outside
 PenUpPos = 40			# Default pen-up position
 PenDownPos = 0			# Default pen-down position
 
-PenUpSpeed = 75
-PenDownSpeed = 25
+applySpeed = False      # Whether to apply speeds to GRBL for pen up and pen down
+PenUpSpeed = 5000       # Speed when pen up (mm/min)
+PenDownSpeed = 1000     # Speed when pen down (mm/min)
 
 penLowerDelay = 0		# added delay (ms) for the pen to go down before the next move
 penLiftDelay = 0		# added delay (ms) for the pen to go up before the next move
