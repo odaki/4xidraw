@@ -101,15 +101,20 @@ class FourxiDrawClass(inkex.Effect):
       dest="setupType", default="align-mode",
       help="The setup option selected")
 
+    self.compat_add_option("--applySpeed",
+      action="store", type="inkbool",
+      dest="applySpeed", default=fourxidraw_conf.applySpeed,
+      help="Whether to apply pen speeds")
+
     self.compat_add_option("--penDownSpeed",
       action="store", type="int",
       dest="penDownSpeed", default=fourxidraw_conf.PenDownSpeed,
-      help="Speed (step/sec) while pen is down")
+      help="Speed (mm/min) while pen is down")
 
     self.compat_add_option("--penUpSpeed",
       action="store", type="int",
       dest="penUpSpeed", default=fourxidraw_conf.PenUpSpeed,
-      help="Rapid speed (percent) while pen is up")
+      help="Rapid speed (mm/min) while pen is up")
 
     self.compat_add_option("--penLiftRate",
       action="store", type="int",
@@ -1379,7 +1384,7 @@ class FourxiDrawClass(inkex.Effect):
       vTime += self.options.penLiftDelay  
       if (vTime < 0): # Do not allow negative delay times
         vTime = 0 
-      self.motion.sendPenUp(vTime)    
+      self.motion.sendPenUp(vTime, self.options.penUpSpeed if self.options.applySpeed else None)    
       if (vTime > 50):
         if self.options.mode != "manual":
           time.sleep(float(vTime - 10)/1000.0)  # pause before issuing next command
@@ -1400,7 +1405,7 @@ class FourxiDrawClass(inkex.Effect):
         vTime += self.options.penLowerDelay 
         if (vTime < 0): # Do not allow negative delay times
           vTime = 0
-        self.motion.sendPenDown(vTime)            
+        self.motion.sendPenDown(vTime, self.options.penDownSpeed if self.options.applySpeed else None)            
         if (vTime > 50):
           if self.options.mode != "manual":
             time.sleep(float(vTime - 10)/1000.0)  # pause before issuing next command
