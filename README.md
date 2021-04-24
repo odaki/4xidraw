@@ -23,6 +23,7 @@ $131=200.000
 $132=200.000
 $N0=M3S90
 ```
+**Note:** If you change the physical dimension from the 4xiDraw default, be sure to edit ```fourxidraw_conf.py``` and change the values of ```PageWidthIn``` and ```PageHeightIn``` accordingly.
 
 ---------
 
