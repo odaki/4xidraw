@@ -19,7 +19,7 @@ def findPort():
         comPortsList = list(comports())
         for port in comPortsList:
             desc = port[1].lower()
-            isUsbSerial = "usb" in desc and "serial" in desc
+            isUsbSerial = "usb" in desc and ("serial" in desc or "uart" in desc)
             isArduino = "arduino" in desc or "acm" in desc
             # I used NetBurner from eltima software to create the virtual com port 
             isWifi = "eltima" in desc
