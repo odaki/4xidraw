@@ -90,7 +90,11 @@ def openPort(doLog):
     foundPort = findPort()
     serialPort = testPort(foundPort)
     if serialPort:
+        serialPort.reset_input_buffer()
+        serialPort.reset_output_buffer()
         g = GrblSerial(serialPort, doLog)
+        # Unlock
+        g.command('$X\r')
         # Set absolute mode
         g.command('G90\r')
         return g
@@ -171,11 +175,14 @@ class GrblSerial(object):
         if (self.port is not None) and (cmd is not None):
             try:
                 self.write(cmd)
-                response = self.readline()
+                response = ''
                 nRetryCount = 0
                 while (len(response) == 0) and (nRetryCount < 30):
                     # get new response to replace null response if necessary
                     response = self.readline()
+                    if response.startswith('['):
+                        response = ''
+                        continue
                     nRetryCount += 1
                 if 'ok' in response.strip():
                     return
@@ -184,6 +191,8 @@ class GrblSerial(object):
                         inkex.errormsg('Error: Unexpected response from GRBL.') 
                         inkex.errormsg('   Command: ' + cmd.strip())
                         inkex.errormsg('   Response: ' + str(response.strip()))
+                        if response.startswidh('ALARM:'):
+                            sys.exit()
                     else:
                         inkex.errormsg('GRBL Serial Timeout after command: %s)' % cmd.strip())
                         sys.exit()
