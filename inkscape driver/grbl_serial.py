@@ -97,6 +97,8 @@ def openPort(doLog):
         g.command('$X\r')
         # Set absolute mode
         g.command('G90\r')
+        # Set unit to mm
+        g.command('G21\r')
         return g
     return None
 
