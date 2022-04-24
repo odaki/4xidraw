@@ -66,6 +66,12 @@ after raising or lowering the pen.
 <param indent="1" name="penLowerRate" type="int" min="20" max="1000" _gui-text="Pen lowering speed (servo steps/s):">150</param>
 <param indent="1" name="penLowerDelay" type="int" min="-500" max="500" _gui-text="Added delay after lowering pen (ms):">0</param>
 
+<_param name="instructions_timing4" type="description" appearance="header">Pen lift and lowering command:</_param>
+<param indent="1" name="penUpDownCommand" type="optiongroup" appearance="combo" _gui-text="Use G-Code for the pen up/down:">
+<option value="M3 S">M3 S</option>
+<option value="G0 Z">G0 Z</option>
+</param>
+
 <_param indent="2" name="instructions_timing4" type="description" xml:space="preserve">
 
 (Press 'Apply' to save settings.)</_param>

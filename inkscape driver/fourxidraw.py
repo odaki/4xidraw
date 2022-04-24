@@ -116,6 +116,11 @@ class FourxiDrawClass(inkex.Effect):
       dest="penUpSpeed", default=fourxidraw_conf.PenUpSpeed,
       help="Rapid speed (mm/min) while pen is up")
 
+    self.compat_add_option("--penUpDownCommand",
+      action="store", type="string",
+      dest="penUpDownCommand", default=fourxidraw_conf.PenUpDownCommand,
+      help="Command for the pen up/down")
+
     self.compat_add_option("--penLiftRate",
       action="store", type="int",
       dest="penLiftRate", default=fourxidraw_conf.penLiftRate,
@@ -283,7 +288,7 @@ class FourxiDrawClass(inkex.Effect):
     
 
   def createMotion(self):
-    self.motion = GrblMotion(self.serialPort, fourxidraw_conf.DPI_16X, self.options.penUpPosition, self.options.penDownPosition)
+    self.motion = GrblMotion(self.serialPort, fourxidraw_conf.DPI_16X, self.options.penUpPosition, self.options.penDownPosition, self.options.penUpDownCommand)
 
   def effect(self):
     '''Main entry point: check to see which mode/tab is selected, and act accordingly.'''

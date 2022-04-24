@@ -27,11 +27,12 @@ import grbl_serial
 import inkex
 
 class GrblMotion(object):
-  def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition):
+  def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition, penUpDownCommand):
     self.port = port
     self.stepsPerInch = stepsPerInch
     self.penUpPosition = penUpPosition
     self.penDownPosition = penDownPosition
+    self.penUpDownCommand = penUpDownCommand
     
   def IsPausePressed(self):
     if (self.port is not None):
@@ -39,7 +40,7 @@ class GrblMotion(object):
 
   def sendPenUp(self, PenDelay, fSpeed):
     if (self.port is not None):
-      strOutput = 'M3 S' + str(self.penUpPosition) + '\r'
+      strOutput = self.penUpDownCommand + str(self.penUpPosition) + '\r'
       self.port.command(strOutput)
       if not fSpeed is None:
         strOutput = 'G4 P0' + '\r'
@@ -60,7 +61,7 @@ class GrblMotion(object):
           self.port.command(strOutput)
           strOutput = f'$111={fSpeed}' + '\r'
           self.port.command(strOutput)
-      strOutput = 'M3 S' + str(self.penDownPosition) + '\r'
+      strOutput = self.penUpDownCommand + str(self.penDownPosition) + '\r'
       self.port.command(strOutput)
       strOutput = 'G4 P' + str(PenDelay/1000.0) + '\r'
       self.port.command(strOutput)
