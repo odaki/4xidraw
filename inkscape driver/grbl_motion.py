@@ -68,6 +68,6 @@ class GrblMotion(object):
 
   def doAbsoluteMove(self, x, y):
     if (self.port is not None):
-      strOutput = 'G1 F10000 X'+str(25.4*x) + ' Y'+str(25.4*y) + '\r'
+      strOutput = 'G1 F10000 X'+str(25.4*x) + ' Y-'+str(25.4*y) + '\r'
       self.port.command(strOutput)
       
