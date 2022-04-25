@@ -23,7 +23,7 @@ def findPort():
             isArduino = "arduino" in desc or "acm" in desc
             # I used NetBurner from eltima software to create the virtual com port 
             isWifi = "eltima" in desc
-            isCDC = "CDC" in desc 
+            isCDC = "cdc" in desc
             if isUsbSerial or isArduino or isCDC or isWifi:
                 return port[0]
     return None
