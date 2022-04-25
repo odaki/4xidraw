@@ -159,6 +159,11 @@ class FourxiDrawClass(inkex.Effect):
       dest="logSerial", default=fourxidraw_conf.logSerial,
       help="Log serial communication")
 
+    self.compat_add_option("--invertYaxis",
+      action="store", type="inkbool",
+      dest="invertYaxis", default=fourxidraw_conf.invertYaxis,
+      help="Invert Y-axis")
+
     self.compat_add_option("--smoothness",
       action="store", type="float",
       dest="smoothness", default=fourxidraw_conf.smoothness,
@@ -288,8 +293,14 @@ class FourxiDrawClass(inkex.Effect):
     
 
   def createMotion(self):
-    self.motion = GrblMotion(self.serialPort, fourxidraw_conf.DPI_16X, self.options.penUpPosition, self.options.penDownPosition, self.options.penUpDownCommand)
-
+    self.motion = GrblMotion(
+        self.serialPort,
+        fourxidraw_conf.DPI_16X,
+        self.options.penUpPosition,
+        self.options.penDownPosition,
+        self.options.penUpDownCommand,
+        self.options.invertYaxis,
+    )
   def effect(self):
     '''Main entry point: check to see which mode/tab is selected, and act accordingly.'''
 

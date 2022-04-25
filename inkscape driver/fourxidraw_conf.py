@@ -47,6 +47,7 @@ autoRotate = True		# Print in portrait or landscape mode automatically
 constSpeed = False		# Use constant velocity mode when pen is down
 reportTime = False		# Report time elapsed
 logSerial = False		# Log serial communication
+invertYaxis = False     # Invert Y axis when move
 
 smoothness = 10.0		# Curve smoothing (default: 10.0)
 cornering = 10.0		# Cornering speed factor (default: 10.0)

@@ -84,6 +84,7 @@ after raising or lowering the pen.
 <param indent="1" name="constSpeed" type="boolean" _gui-text="Use constant speed when pen is down">false</param>	
 <param indent="1" name="reportTime" type="boolean" _gui-text="Report time elapsed after each drawing">false</param> 
 <param indent="1" name="logSerial" type="boolean" _gui-text="Log serial communication">false</param> 
+<param indent="1" name="invertYaxis" type="boolean" _gui-text="Invert Y-axis">false</param> 
 
 <param indent="1" name="smoothness" type="float" min=".1" max="100" _gui-text="Curve smoothing (default: 10.0):">10.0</param>
 <param indent="1" name="cornering" type="float" min=".1" max="100" _gui-text="Cornering speed factor (default: 10.0):">10.0</param>

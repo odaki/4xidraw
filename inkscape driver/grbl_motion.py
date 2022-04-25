@@ -27,12 +27,13 @@ import grbl_serial
 import inkex
 
 class GrblMotion(object):
-  def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition, penUpDownCommand):
+  def __init__(self, port, stepsPerInch, penUpPosition, penDownPosition, penUpDownCommand, invertYaxis):
     self.port = port
     self.stepsPerInch = stepsPerInch
     self.penUpPosition = penUpPosition
     self.penDownPosition = penDownPosition
     self.penUpDownCommand = penUpDownCommand
+    self.Xsign = -1 if invertYaxis else 1
     
   def IsPausePressed(self):
     if (self.port is not None):
@@ -68,6 +69,6 @@ class GrblMotion(object):
 
   def doAbsoluteMove(self, x, y):
     if (self.port is not None):
-      strOutput = 'G1 F10000 X'+str(25.4*x) + ' Y-'+str(25.4*y) + '\r'
+      strOutput = 'G1 F10000 X' + str(round(25.4*x,3)) + ' Y' + str(round(25.4*y*self.Xsign,3)) + '\r'
       self.port.command(strOutput)
       
