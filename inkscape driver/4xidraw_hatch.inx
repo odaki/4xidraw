@@ -4,7 +4,6 @@
   <id>command.4xidraw.hatch.revb6</id>
   <dependency type="extension">org.inkscape.output.svg.inkscape</dependency>
   <dependency type="executable" location="extensions">eggbot_hatch.py</dependency>
-  <dependency type="executable" location="extensions">inkex.py</dependency>
   <dependency type="executable" location="extensions">simplepath.py</dependency>
   <dependency type="executable" location="extensions">simpletransform.py</dependency>
   <dependency type="executable" location="extensions">simplestyle.py</dependency>
